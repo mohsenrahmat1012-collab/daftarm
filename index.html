@@ -1,0 +1,2960 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" id="metaTheme" content="#14171d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="دفتر پرونده‌ها">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>دفتر پرونده‌ها</title>
+<script>
+(function(){
+  try{
+    var a=JSON.parse(localStorage.getItem("cases-ui-v1")||"{}");
+    document.documentElement.setAttribute("data-palette", a.palette||"brass");
+    document.documentElement.style.setProperty("--ui-scale", String(a.fontScale||1));
+    document.documentElement.style.setProperty("--icon-scale", String(a.iconScale||1));
+  }catch(e){}
+})();
+</script>
+
+<script>
+// Jalali (Persian) <-> Gregorian calendar conversion.
+// Algorithm by K. M. Borkowski, same core used by the jalaali-js library — embedded
+// here so this page works fully on its own, with no external script dependency.
+(function(){
+  var breaks = [-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2324,2394,2456,3178];
+  function div(a,b){return ~~(a/b);}
+  function mod(a,b){return a-~~(a/b)*b;}
+  function jalCal(jy, withoutLeap){
+    var bl=breaks.length, gy=jy+621, leapJ=-14, jp=breaks[0], jm,jump,leap,leapG,march,n,i;
+    if(jy<jp||jy>=breaks[bl-1]) throw new Error('Invalid Jalaali year '+jy);
+    for(i=1;i<bl;i+=1){ jm=breaks[i]; jump=jm-jp; if(jy<jm) break; leapJ=leapJ+div(jump,33)*8+div(mod(jump,33),4); jp=jm; }
+    n=jy-jp;
+    leapJ=leapJ+div(n,33)*8+div(mod(n,33)+3,4);
+    if(mod(jump,33)===4 && jump-n===4) leapJ+=1;
+    leapG=div(gy,4)-div((div(gy,100)+1)*3,4)-150;
+    march=20+leapJ-leapG;
+    if(withoutLeap) return {gy:gy, march:march};
+    if(jump-n<6) n=n-jump+div(jump+4,33)*33;
+    leap=mod(mod(n+1,33)-1,4);
+    if(leap===-1) leap=4;
+    return {leap:leap, gy:gy, march:march};
+  }
+  function g2d(gy,gm,gd){
+    var d=div((gy+div(gm-8,6)+100100)*1461,4)+div(153*mod(gm+9,12)+2,5)+gd-34840408;
+    d=d-div(div(gy+100100+div(gm-8,6),100)*3,4)+752;
+    return d;
+  }
+  function d2g(jdn){
+    var j,i,gd,gm,gy;
+    j=4*jdn+139361631;
+    j=j+div(div(4*jdn+183187720,146097)*3,4)*4-3908;
+    i=div(mod(j,1461),4)*5+308;
+    gd=div(mod(i,153),5)+1;
+    gm=mod(div(i,153),12)+1;
+    gy=div(j,1461)-100100+div(8-gm,6);
+    return {gy:gy,gm:gm,gd:gd};
+  }
+  function j2d(jy,jm,jd){
+    var r=jalCal(jy,true);
+    return g2d(r.gy,3,r.march)+(jm-1)*31-div(jm,7)*(jm-7)+jd-1;
+  }
+  function d2j(jdn){
+    var gy=d2g(jdn).gy, jy=gy-621, r=jalCal(jy,false), jdn1f=g2d(gy,3,r.march), jd,jm,k;
+    k=jdn-jdn1f;
+    if(k>=0){
+      if(k<=185){ jm=1+div(k,31); jd=mod(k,31)+1; return {jy:jy,jm:jm,jd:jd}; }
+      else { k-=186; }
+    } else { jy-=1; k+=179; if(r.leap===1) k+=1; }
+    jm=7+div(k,30); jd=mod(k,30)+1;
+    return {jy:jy,jm:jm,jd:jd};
+  }
+  function toJalaali(gy,gm,gd){
+    if(Object.prototype.toString.call(gy)==='[object Date]'){ gd=gy.getDate(); gm=gy.getMonth()+1; gy=gy.getFullYear(); }
+    return d2j(g2d(gy,gm,gd));
+  }
+  function toGregorian(jy,jm,jd){ return d2g(j2d(jy,jm,jd)); }
+  function isLeapJalaaliYear(jy){ return jalCal(jy).leap===0; }
+  function jalaaliMonthLength(jy,jm){
+    if(jm<=6) return 31;
+    if(jm<=11) return 30;
+    return isLeapJalaaliYear(jy) ? 30 : 29;
+  }
+  function isValidJalaaliDate(jy,jm,jd){
+    return jy>=-61 && jy<=3177 && jm>=1 && jm<=12 && jd>=1 && jd<=jalaaliMonthLength(jy,jm);
+  }
+  window.jalaali = { toJalaali:toJalaali, toGregorian:toGregorian, isValidJalaaliDate:isValidJalaaliDate,
+    isLeapJalaaliYear:isLeapJalaaliYear, jalaaliMonthLength:jalaaliMonthLength, jalCal:jalCal, j2d:j2d, d2j:d2j, g2d:g2d, d2g:d2g };
+})();
+</script><style>
+  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --ui-scale:1;
+    --icon-scale:1;
+    --ink:#14171d;
+    --panel:#1c2028;
+    --panel-alt:#242a34;
+    --border:#333a46;
+    --text:#ece6d6;
+    --text-muted:#9c9686;
+    --brass:#cfa64d;
+    --brass-dim:#8a6f38;
+    --maroon:#b04a4a;
+    --sage:#7a9a76;
+    --slate:#6f8ba6;
+    --amber:#d98a3d;
+    --violet:#9070b8;
+    --teal:#4f9a97;
+    --on-accent:#1a1406;
+    --accent-hover:#dcb35a;
+    --alarm:#e08787;
+    --scrim:rgba(10,12,15,.65);
+  }
+  html[data-palette="pearl"]{
+    --ink:#f3eee4; --panel:#fffaf1; --panel-alt:#efe6d6; --border:#d9cdb6;
+    --text:#2a2418; --text-muted:#6f6453; --brass:#9a6b24; --brass-dim:#7a5420;
+    --maroon:#a33d3d; --sage:#4f7a4c; --slate:#4d6a88; --amber:#b86a24;
+    --violet:#6d4e96; --teal:#2f7a76; --on-accent:#fff8ea; --accent-hover:#7e5618;
+    --alarm:#b42323; --scrim:rgba(40,32,20,.4);
+  }
+  html[data-palette="navy"]{
+    --ink:#0c1422; --panel:#132033; --panel-alt:#1b2c44; --border:#2c425f;
+    --text:#e7eef6; --text-muted:#8fa0b8; --brass:#d4b46a; --brass-dim:#9a7d3e;
+    --maroon:#c45c5c; --sage:#7eaa78; --slate:#7ea0c8; --amber:#e09a4a;
+    --violet:#9b7ec8; --teal:#5ab3ae; --on-accent:#16110a; --accent-hover:#e3c88a;
+    --alarm:#f09a9a; --scrim:rgba(6,10,18,.7);
+  }
+  html[data-palette="olive"]{
+    --ink:#131610; --panel:#1b2018; --panel-alt:#252b20; --border:#3a4334;
+    --text:#e7eadc; --text-muted:#9aa08a; --brass:#c6b07a; --brass-dim:#8d7a4a;
+    --maroon:#b85a4a; --sage:#8fbc78; --slate:#7a9578; --amber:#d4a04a;
+    --violet:#8e7aa8; --teal:#6aa090; --on-accent:#1a160c; --accent-hover:#d4c090;
+    --alarm:#e09080; --scrim:rgba(10,12,8,.65);
+  }
+  html[data-palette="wine"]{
+    --ink:#180e12; --panel:#24151c; --panel-alt:#2e1c24; --border:#4a3038;
+    --text:#f3e6e8; --text-muted:#b0989c; --brass:#d4b07a; --brass-dim:#9a7850;
+    --maroon:#d06070; --sage:#7a9a76; --slate:#8a7a9a; --amber:#e08a5a;
+    --violet:#b070a0; --teal:#6a9a98; --on-accent:#1a100c; --accent-hover:#e0c498;
+    --alarm:#f08090; --scrim:rgba(12,6,8,.7);
+  }
+  html[data-palette="sea"]{
+    --ink:#0c1416; --panel:#132022; --panel-alt:#1b2c30; --border:#2c454a;
+    --text:#e4eef0; --text-muted:#8aa0a4; --brass:#7ec8bc; --brass-dim:#4a8a82;
+    --maroon:#c45c5c; --sage:#7aaa78; --slate:#6a90a8; --amber:#d4a05a;
+    --violet:#8a7ab0; --teal:#5ec0b8; --on-accent:#071210; --accent-hover:#9edcd4;
+    --alarm:#f09090; --scrim:rgba(6,12,14,.7);
+  }
+  html[data-palette="slate"]{
+    --ink:#101318; --panel:#181c24; --panel-alt:#222830; --border:#343c48;
+    --text:#e6eaf0; --text-muted:#8b93a0; --brass:#8aa4c4; --brass-dim:#5a7394;
+    --maroon:#c45c5c; --sage:#7a9a76; --slate:#6f8ba6; --amber:#d98a3d;
+    --violet:#9070b8; --teal:#4f9a97; --on-accent:#0c1016; --accent-hover:#a8c0dc;
+    --alarm:#e08787; --scrim:rgba(8,10,14,.7);
+  }
+  html[data-palette="sand"]{
+    --ink:#f6eedc; --panel:#fff8ea; --panel-alt:#efe4cc; --border:#dcc8a4;
+    --text:#2c2418; --text-muted:#74685a; --brass:#8a5a28; --brass-dim:#6a441c;
+    --maroon:#a33d3d; --sage:#4a7048; --slate:#4a6280; --amber:#b86a24;
+    --violet:#6a4a88; --teal:#2a706c; --on-accent:#fff8ea; --accent-hover:#6e4418;
+    --alarm:#b41c1c; --scrim:rgba(40,32,16,.4);
+  }
+  *{box-sizing:border-box;}
+  html{ font-size: calc(16px * var(--ui-scale, 1)); }
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:'Vazirmatn',Tahoma,sans-serif;
+    min-height:100vh;
+    line-height:1.7;
+    transition: background .2s ease, color .2s ease;
+  }
+  .ico{
+    width: calc(18px * var(--icon-scale, 1) * var(--ui-scale, 1));
+    height: calc(18px * var(--icon-scale, 1) * var(--ui-scale, 1));
+    flex:0 0 auto;
+    display:inline-block;
+    vertical-align:-0.2em;
+    overflow:visible;
+  }
+  svg.ico{ width: calc(18px * var(--icon-scale, 1) * var(--ui-scale, 1)); height: calc(18px * var(--icon-scale, 1) * var(--ui-scale, 1)); }
+  .appear-panel h3{ display:flex; align-items:center; gap:8px; }
+  .appear-panel h3 .ico,
+  .appear-label .ico{ width:1.15em; height:1.15em; }
+  .tab .ico, .btn .ico{ margin-inline-end:.4em; }
+  .btn-ico .ico{ margin-inline-end:0; vertical-align:middle; }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
+  ::selection{ background:color-mix(in srgb, var(--brass) 35%, transparent); }
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  /* ---------- layout ---------- */
+  .app{ max-width:1180px; margin:0 auto; padding:0 16px 64px; }
+  header.top{
+    position:sticky; top:0; z-index:20;
+    background:color-mix(in srgb, var(--ink) 92%, transparent); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--border);
+    padding:12px 16px;
+  }
+  header.top .inner{ max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .brand{ display:flex; flex-direction:column; gap:2px; }
+  .brand .title{ font-weight:800; font-size:1.1875rem; color:var(--brass); letter-spacing:.2px; }
+  .brand .subtitle{ font-size:0.75rem; color:var(--text-muted); }
+  .head-tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .tabs{ display:flex; gap:6px; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:4px; }
+  .tab{
+    border:none; background:transparent; color:var(--text-muted);
+    padding:8px 16px; border-radius:9px; cursor:pointer; font-size:0.875rem; font-weight:600;
+    transition:background .15s, color .15s;
+    display:inline-flex; align-items:center;
+  }
+  .tab.active{ background:var(--brass); color:var(--on-accent); }
+  .tab:not(.active):hover{ color:var(--text); background:var(--panel-alt); }
+  .tab.alarm{ color:var(--alarm); }
+
+  .btn{
+    border:1px solid var(--border); background:var(--panel-alt); color:var(--text);
+    padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.875rem; font-weight:600;
+    transition:border-color .15s, background .15s;
+    display:inline-flex; align-items:center;
+  }
+  .btn:hover{ border-color:var(--brass-dim); }
+  .btn:focus-visible, .tab:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .case-card:focus-visible, .hearing-item:focus-visible{
+    outline:2px solid var(--brass); outline-offset:2px;
+  }
+  .btn-primary{ background:var(--brass); border-color:var(--brass); color:var(--on-accent); }
+  .btn-primary:hover{ background:var(--accent-hover); border-color:var(--accent-hover); }
+  .btn-danger{ background:transparent; border-color:var(--maroon); color:var(--maroon); }
+  .btn-danger:hover{ background:color-mix(in srgb, var(--maroon) 12%, transparent); }
+  .btn-ghost{ background:transparent; border-color:transparent; color:var(--text-muted); }
+  .btn-ghost:hover{ color:var(--text); background:var(--panel-alt); }
+  .btn-sm{ padding:6px 12px; font-size:0.8125rem; border-radius:8px; }
+
+  main{ padding-top:20px; }
+  .section-title{ font-weight:800; font-size:1rem; color:var(--brass); margin:0 0 12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .section-title.alarm{ color:var(--alarm); }
+  .section-title .count{ font-size:0.75rem; font-weight:600; color:var(--text-muted); background:var(--panel-alt); border:1px solid var(--border); border-radius:20px; padding:2px 10px; }
+  .empty{ color:var(--text-muted); font-size:0.875rem; padding:26px 18px; text-align:center; border:1px dashed var(--border); border-radius:14px; background:var(--panel); }
+
+  /* ---------- dashboard ---------- */
+  .stat-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:24px; }
+  .stat-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px 16px; }
+  .stat-card.alarm{ border-color:color-mix(in srgb, var(--maroon) 50%, transparent); }
+  .stat-card .num{ font-weight:800; font-size:1.625rem; color:var(--brass); }
+  .stat-card.alarm .num{ color:var(--alarm); }
+  .stat-card .lbl{ font-size:0.75rem; color:var(--text-muted); margin-top:2px; }
+
+
+  /* ---------- statistics ---------- */
+  .stats-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .stats-title{ font-weight:800; font-size:1.05rem; color:var(--brass); }
+  .stats-sub{ font-size:.75rem; color:var(--text-muted); margin-top:3px; }
+  .period-switch{ display:flex; gap:5px; background:var(--panel); border:1px solid var(--border); padding:4px; border-radius:11px; }
+  .period-btn{ border:0; background:transparent; color:var(--text-muted); font-family:inherit; font-size:.75rem; font-weight:700; padding:7px 12px; border-radius:8px; cursor:pointer; }
+  .period-btn.active{ background:var(--brass); color:var(--on-accent); }
+  .period-btn:not(.active):hover{ background:var(--panel-alt); color:var(--text); }
+  .metric-card{ position:relative; overflow:hidden; }
+  .metric-card .metric-note{ font-size:.65rem; color:var(--text-muted); margin-top:4px; }
+  .stats-panels{ display:grid; grid-template-columns:1fr; gap:14px; margin-top:18px; }
+  @media (min-width:900px){ .stats-panels{ grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); } }
+  .chart-card{ background:var(--panel); border:1px solid var(--border); border-radius:15px; padding:15px 16px; min-width:0; }
+  .chart-card h3{ margin:0 0 3px; font-size:.875rem; color:var(--text); }
+  .chart-desc{ color:var(--text-muted); font-size:.69rem; margin-bottom:14px; }
+  .metric-bars{ display:flex; flex-direction:column; gap:10px; }
+  .metric-bar-row{ display:grid; grid-template-columns:minmax(95px,135px) 1fr 34px; gap:9px; align-items:center; font-size:.72rem; }
+  .metric-bar-label{ color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .metric-track{ height:11px; border-radius:999px; background:var(--panel-alt); border:1px solid var(--border); overflow:hidden; }
+  .metric-fill{ height:100%; min-width:0; border-radius:999px; background:var(--brass); }
+  .metric-fill.followups{ background:var(--slate); }
+  .metric-fill.motions{ background:var(--violet); }
+  .metric-fill.wins{ background:var(--sage); }
+  .metric-fill.losses{ background:var(--maroon); }
+  .metric-bar-num{ color:var(--brass); font-weight:800; text-align:left; direction:ltr; }
+  .trend-chart{ height:190px; display:flex; align-items:stretch; gap:6px; padding-top:8px; border-bottom:1px solid var(--border); }
+  .trend-col{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:5px; }
+  .trend-value{ font-size:.62rem; color:var(--text-muted); min-height:1.2em; }
+  .trend-bar-wrap{ height:132px; width:100%; display:flex; align-items:flex-end; justify-content:center; }
+  .trend-bar{ width:min(24px,72%); min-height:0; border-radius:5px 5px 2px 2px; background:linear-gradient(180deg,var(--brass),var(--brass-dim)); border:1px solid color-mix(in srgb,var(--brass) 55%, transparent); }
+  .trend-label{ width:100%; text-align:center; font-size:.58rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .stats-empty-note{ padding:10px 12px; border-radius:10px; border:1px dashed var(--border); color:var(--text-muted); font-size:.72rem; margin-top:12px; }
+
+  .hearing-item{
+    display:flex; align-items:center; gap:14px; background:var(--panel);
+    border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-bottom:10px;
+    cursor:pointer; transition:border-color .15s; width:100%; text-align:right; font-family:inherit;
+  }
+  .hearing-item:hover{ border-color:var(--brass-dim); }
+  .hearing-item.overdue{ border-color:color-mix(in srgb, var(--maroon) 45%, transparent); background:color-mix(in srgb, var(--maroon) 6%, transparent); }
+  .date-block{
+    flex:0 0 auto; width:58px; text-align:center; border-radius:10px; padding:6px 0;
+    background:var(--panel-alt); border:1px solid var(--border);
+  }
+  .date-block .d{ font-weight:800; font-size:1.25rem; color:var(--brass); line-height:1; }
+  .date-block .m{ font-size:0.625rem; color:var(--text-muted); margin-top:3px; }
+  .hearing-mid{ flex:1 1 auto; min-width:0; }
+  .hearing-mid .case-num{ font-weight:700; font-size:0.8125rem; color:var(--text); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .hearing-mid .hearing-title{ font-size:0.8125rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hearing-right{ flex:0 0 auto; display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .urgency{ font-size:0.6875rem; font-weight:700; padding:4px 10px; border-radius:20px; white-space:nowrap; }
+  .urgency.soon{ background:color-mix(in srgb, var(--maroon) 15%, transparent); color:var(--alarm); border:1px solid color-mix(in srgb, var(--maroon) 40%, transparent); }
+  .urgency.mid{ background:color-mix(in srgb, var(--brass) 15%, transparent); color:var(--brass); border:1px solid color-mix(in srgb, var(--brass) 40%, transparent); }
+  .urgency.far{ background:color-mix(in srgb, var(--slate) 15%, transparent); color:var(--slate); border:1px solid color-mix(in srgb, var(--slate) 35%, transparent); }
+  .urgency.past{ background:color-mix(in srgb, var(--maroon) 20%, transparent); color:var(--alarm); border:1px solid color-mix(in srgb, var(--maroon) 50%, transparent); }
+
+  .activity-row{ display:flex; align-items:baseline; gap:10px; padding:10px 4px; border-bottom:1px solid var(--border); font-size:0.8125rem; }
+  .activity-row:last-child{ border-bottom:none; }
+  .activity-row .adate{ color:var(--text-muted); font-size:0.75rem; flex:0 0 auto; min-width:78px; }
+  .activity-row .abody{ flex:1 1 auto; min-width:0; }
+  .activity-row .acase{ color:var(--brass); font-weight:700; }
+
+  /* ---------- cases ---------- */
+  .filter-bar{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .filter-bar input{ flex:1 1 220px; }
+  .filter-bar select{ flex:0 1 170px; }
+  .cases-layout{ display:flex; flex-direction:column; gap:16px; }
+  @media (min-width:960px){
+    .cases-layout{ display:grid; grid-template-columns:350px 1fr; align-items:start; gap:20px; }
+    .col-hidden{ display:block !important; }
+    .mobile-only{ display:none !important; }
+  }
+  .col-hidden{ display:none; }
+  .case-list{ max-height:none; }
+  @media (min-width:960px){ .case-list{ max-height:calc(100vh - 210px); overflow-y:auto; padding-inline-start:4px; } }
+
+  .case-card{
+    display:block; width:100%; text-align:right; background:var(--panel); border:1px solid var(--border);
+    border-inline-end:4px solid var(--slate); border-radius:12px; padding:12px 14px; margin-bottom:10px;
+    cursor:pointer; transition:border-color .15s, background .15s; font-family:inherit;
+  }
+  .case-card:hover{ background:var(--panel-alt); }
+  .case-card.selected{ background:var(--panel-alt); border-color:var(--brass-dim); }
+  .case-card.dim{ opacity:.62; }
+  .case-card .cnum{ font-weight:800; color:var(--brass); font-size:0.875rem; }
+  .case-card .cfiling{ font-size:0.6875rem; color:var(--text-muted); }
+  .case-card .cparties{ font-size:0.8125rem; color:var(--text); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .case-card .csubject{ font-size:0.75rem; color:var(--text-muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .case-card .cmeta{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+
+  .badge{ font-size:0.6875rem; font-weight:700; padding:3px 9px; border-radius:20px; border:1px solid; display:inline-block; }
+  .badge-brass{ color:var(--brass); border-color:color-mix(in srgb, var(--brass) 40%, transparent); background:color-mix(in srgb, var(--brass) 10%, transparent); }
+  .badge-sage{ color:var(--sage); border-color:color-mix(in srgb, var(--sage) 40%, transparent); background:color-mix(in srgb, var(--sage) 10%, transparent); }
+  .badge-maroon{ color:var(--alarm); border-color:color-mix(in srgb, var(--maroon) 40%, transparent); background:color-mix(in srgb, var(--maroon) 10%, transparent); }
+  .badge-slate{ color:var(--slate); border-color:color-mix(in srgb, var(--slate) 40%, transparent); background:color-mix(in srgb, var(--slate) 10%, transparent); }
+  .badge-amber{ color:var(--amber); border-color:color-mix(in srgb, var(--amber) 40%, transparent); background:color-mix(in srgb, var(--amber) 12%, transparent); }
+  .badge-violet{ color:var(--violet); border-color:color-mix(in srgb, var(--violet) 45%, transparent); background:color-mix(in srgb, var(--violet) 12%, transparent); }
+  .badge-teal{ color:var(--teal); border-color:color-mix(in srgb, var(--teal) 45%, transparent); background:color-mix(in srgb, var(--teal) 12%, transparent); }
+  .badge-muted{ color:var(--text-muted); border-color:var(--border); background:var(--panel-alt); }
+
+  .detail-panel{ background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:20px; }
+  .mobile-only{ display:inline-block; }
+  .detail-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:16px; margin-bottom:16px; }
+  .detail-head .cnum-big{ font-weight:800; font-size:1.3125rem; color:var(--brass); }
+  .detail-head .court-line{ margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; }
+  .info-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px 20px; margin-top:14px; font-size:0.8125rem; }
+  .info-grid .lbl{ color:var(--text-muted); font-size:0.6875rem; }
+  .info-grid .val{ margin-top:2px; }
+  .detail-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  .next-action{ background:var(--panel-alt); border:1px solid var(--border); border-inline-start:3px solid var(--brass); border-radius:10px; padding:12px 14px; margin-bottom:18px; }
+  .next-action .lbl{ font-size:0.6875rem; color:var(--text-muted); margin-bottom:4px; }
+  .next-action .txt{ font-size:0.8125rem; white-space:pre-wrap; }
+
+  .attach-list{ display:flex; flex-direction:column; gap:8px; }
+  .attach-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    background:var(--panel-alt); border:1px solid var(--border); border-radius:10px; padding:10px 14px; }
+  .attach-info{ min-width:0; }
+  .attach-title{ font-size:0.8125rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .attach-meta{ font-size:0.6875rem; color:var(--text-muted); margin-top:2px; }
+  .attach-actions{ display:flex; gap:6px; flex-shrink:0; }
+
+  .followup-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    background:var(--panel-alt); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin-bottom:8px;
+    border-inline-end:3px solid var(--slate); }
+  .followup-row.pri-urgent{ border-inline-end-color:var(--maroon); }
+  .followup-row.is-done{ opacity:.55; }
+  .fu-main{ min-width:0; flex:1 1 220px; }
+  .fu-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+  .fu-case{ font-size:0.6875rem; color:var(--text-muted); }
+  .fu-title{ font-size:0.8125rem; font-weight:700; }
+  .fu-desc{ font-size:0.75rem; color:var(--text-muted); margin-top:3px; white-space:pre-wrap; }
+  .fu-actions{ display:flex; gap:6px; flex-shrink:0; flex-wrap:wrap; }
+
+  .timeline{ position:relative; margin-top:6px; }
+  .tl-item{ position:relative; padding-inline-end:26px; padding-bottom:20px; border-inline-end:2px solid var(--border); margin-inline-end:9px; }
+  .tl-item:last-child{ border-color:transparent; padding-bottom:0; }
+  .tl-dot{ position:absolute; inline-size:calc(1rem * var(--icon-scale,1)); block-size:calc(1rem * var(--icon-scale,1)); border-radius:50%; inset-inline-end:calc(-0.56rem * var(--icon-scale,1)); top:0; border:2px solid var(--ink); }
+  .tl-dot.brass{background:var(--brass);} .tl-dot.sage{background:var(--sage);} .tl-dot.maroon{background:var(--maroon);}
+  .tl-dot.slate{background:var(--slate);} .tl-dot.amber{background:var(--amber);} .tl-dot.violet{background:var(--violet);}
+  .tl-dot.teal{background:var(--teal);} .tl-dot.muted{background:var(--text-muted);}
+  .tl-card{ background:var(--panel-alt); border:1px solid var(--border); border-radius:12px; padding:12px 14px; }
+  .tl-card.is-done{ opacity:.6; }
+  .tl-card.is-overdue{ border-color:color-mix(in srgb, var(--maroon) 50%, transparent); }
+  .tl-card .tl-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  .tl-card .tl-date{ font-weight:700; font-size:0.8125rem; color:var(--brass); }
+  .tl-card .tl-title{ font-weight:700; font-size:0.875rem; margin-top:6px; }
+  .tl-card .tl-desc{ font-size:0.8125rem; color:var(--text-muted); margin-top:4px; white-space:pre-wrap; }
+  .tl-card .tl-actions{ margin-top:8px; display:flex; gap:4px; flex-wrap:wrap; }
+
+  /* ---------- forms ---------- */
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; }
+  .field .err{ font-size:0.75rem; color:var(--alarm); margin-top:5px; }
+  .field .hint{ font-size:0.6875rem; color:var(--text-muted); margin-top:5px; line-height:1.6; }
+  input[type=text], input[type=number], select, textarea{
+    width:100%; background:var(--panel-alt); border:1px solid var(--border); color:var(--text);
+    border-radius:9px; padding:10px 12px; font-size:0.875rem; font-family:inherit;
+  }
+  textarea{ resize:vertical; min-height:70px; }
+  .field-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+
+  .calc-box{ background:var(--panel-alt); border:1px dashed var(--border); border-radius:10px; padding:12px; margin-bottom:14px; }
+  .calc-box .calc-title{ font-size:0.75rem; color:var(--brass); font-weight:700; margin-bottom:8px; }
+  .preset-row{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .preset{ font-size:0.6875rem; font-weight:600; padding:5px 10px; border-radius:20px; cursor:pointer;
+    background:var(--panel); border:1px solid var(--border); color:var(--text-muted); font-family:inherit; }
+  .preset:hover{ border-color:var(--brass-dim); color:var(--text); }
+
+  .modal-backdrop{ position:fixed; inset:0; background:var(--scrim); display:flex; align-items:flex-start; justify-content:center; padding:4vh 16px; z-index:100; overflow-y:auto; }
+  .modal{ background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:22px; width:100%; max-width:560px; margin-bottom:5vh; }
+  .modal h3{ margin:0 0 16px; color:var(--brass); font-size:1.0625rem; }
+  .modal-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; flex-wrap:wrap; }
+  .confirm-text{ font-size:0.875rem; margin-bottom:18px; line-height:1.8; }
+
+  .toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--panel-alt); border:1px solid var(--brass-dim); color:var(--text); padding:10px 18px; border-radius:10px; font-size:0.8125rem; z-index:200; max-width:90vw; text-align:center; }
+  .loading{ text-align:center; padding:60px 0; color:var(--text-muted); font-size:0.875rem; }
+
+  .storage-warn{
+    margin-top:16px; background:color-mix(in srgb, var(--maroon) 10%, transparent); border:1px solid color-mix(in srgb, var(--maroon) 45%, transparent);
+    border-radius:14px; padding:14px 16px;
+  }
+  .storage-warn .sw-title{ font-weight:800; font-size:0.875rem; color:var(--alarm); margin-bottom:6px; }
+  .storage-warn .sw-body{ font-size:0.8125rem; color:var(--text); line-height:1.9; }
+
+  .setup-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:6vh 16px; }
+  .setup-card{ background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:28px 24px; width:100%; max-width:640px; }
+  .setup-logo{ font-weight:800; font-size:1.375rem; color:var(--brass); margin-bottom:8px; }
+  .setup-lead{ font-size:0.8125rem; color:var(--text-muted); line-height:1.9; margin-bottom:4px; }
+  .setup-card .storage-warn{ margin-top:14px; }
+
+
+  /* ---------- appearance ---------- */
+  .appear-scrim{ position:fixed; inset:0; z-index:45; background:transparent; }
+  .appear-panel{
+    position:fixed; top:70px; inset-inline-end:16px; z-index:50;
+    width:min(440px, calc(100vw - 24px));
+    background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:18px; box-shadow:0 18px 50px color-mix(in srgb, var(--ink) 55%, transparent);
+    max-height:calc(100vh - 90px); overflow:auto;
+  }
+  .appear-panel h3{ margin:0 0 4px; color:var(--brass); font-size:1rem; }
+  .appear-lead{ font-size:0.75rem; color:var(--text-muted); margin-bottom:14px; line-height:1.7; }
+  .appear-label{ font-size:0.75rem; font-weight:700; color:var(--text-muted); margin:12px 0 8px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .scale-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  .scale-chip{
+    flex:1 1 0; min-width:64px; border:1px solid var(--border); background:var(--panel-alt);
+    color:var(--text); border-radius:10px; padding:8px 6px; cursor:pointer; font-family:inherit;
+    font-size:0.75rem; font-weight:700; text-align:center;
+  }
+  .scale-chip.active{ background:var(--brass); border-color:var(--brass); color:var(--on-accent); }
+  .scale-chip:hover:not(.active){ border-color:var(--brass-dim); }
+  .pal-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .pal-card{
+    display:flex; flex-direction:column; gap:8px; text-align:right; font-family:inherit;
+    border:1px solid var(--border); background:var(--panel-alt); border-radius:12px;
+    padding:10px 12px; cursor:pointer; color:var(--text);
+  }
+  .pal-card.active{ border-color:var(--brass); box-shadow:0 0 0 1px var(--brass); }
+  .pal-card:hover{ border-color:var(--brass-dim); }
+  .pal-dots{ display:flex; gap:5px; }
+  .pal-dot{ width:16px; height:16px; border-radius:50%; border:1px solid var(--border); }
+  .pal-name{ font-size:0.8125rem; font-weight:700; }
+  .settings-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:16px 18px; margin-bottom:20px; display:flex; flex-direction:column; gap:10px;
+  }
+  .settings-lead{ font-size:0.8125rem; color:var(--text-muted); line-height:1.8; }
+  a.btn{ text-decoration:none; }
+  .setup-tools{ display:flex; justify-content:flex-end; margin-bottom:8px; }
+  .setup-card .appear-bar{
+    max-width:none; margin:0 0 16px; padding:0 0 12px;
+    border-top:none; border-bottom:1px solid var(--border);
+  }
+  .setup-card .appear-pals{ margin-inline-start:0; }
+
+  .appear-bar{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px;
+    max-width:1180px; margin:0 auto; padding:8px 16px 10px;
+    border-top:1px solid var(--border);
+  }
+  .appear-ctrl{
+    display:flex; align-items:center; gap:6px;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:4px 8px;
+  }
+  .appear-ctrl-lbl{
+    font-size:0.6875rem; font-weight:700; color:var(--text-muted); padding-inline:4px; white-space:nowrap;
+  }
+  .appear-pct{ font-size:0.6875rem; font-weight:800; color:var(--brass); min-width:2.6em; text-align:center; }
+  .appear-ctrl input[type=range]{
+    width:88px; height:22px; accent-color:var(--brass); cursor:pointer; direction:ltr;
+    padding:0; background:transparent; border:none;
+  }
+  .stepper{
+    width:30px; height:30px; border-radius:8px; border:1px solid var(--border);
+    background:var(--panel-alt); color:var(--text); cursor:pointer; font-family:inherit;
+    font-weight:800; font-size:0.875rem; display:inline-flex; align-items:center; justify-content:center;
+    padding:0;
+  }
+  .stepper:hover{ border-color:var(--brass-dim); color:var(--brass); }
+  .stepper .ico{ margin:0; width:14px; height:14px; }
+  .appear-pals{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-inline-start:auto; }
+  .pal-swatch{
+    width:22px; height:22px; border-radius:50%; border:2px solid var(--border); cursor:pointer; padding:0;
+    background:linear-gradient(135deg, var(--sw1) 0 50%, var(--sw2) 50% 100%);
+  }
+  .pal-swatch.active{ border-color:var(--brass); box-shadow:0 0 0 2px color-mix(in srgb, var(--brass) 45%, transparent); }
+  .scale-slide{ width:100%; accent-color:var(--brass); direction:ltr; cursor:pointer; }
+  input[type=range].scale-slide{
+    background:transparent; border:none; padding:0; height:28px;
+  }
+
+  @media print{
+    .appear-scrim, .appear-panel, [data-act="toggle-appearance"], .appear-bar{ display:none !important; }
+  }
+
+  /* ---------- print ---------- */
+  .print-only{ display:none; }
+  @media print{
+    body{ background:#fff; color:#000; }
+    header.top, .filter-bar, .detail-actions, .tl-actions, .attach-actions, .fu-actions, .case-list, .no-print{ display:none !important; }
+    .app{ max-width:none; padding:0; }
+    .detail-panel{ border:none; background:#fff; padding:0; }
+    .cases-layout{ display:block !important; }
+    .tl-card, .next-action, .stat-card{ background:#fff; border:1px solid #999; }
+    .cnum-big, .section-title, .tl-date, .case-card .cnum{ color:#000 !important; }
+    .info-grid .lbl, .tl-desc, .next-action .lbl{ color:#444 !important; }
+    .badge{ color:#000 !important; border-color:#666 !important; background:#fff !important; }
+    .tl-item{ border-inline-end:1px solid #bbb; }
+    .print-only{ display:block; margin-bottom:14px; font-size:0.75rem; color:#444; border-bottom:1px solid #999; padding-bottom:8px; }
+    .fin-actions{ display:none !important; }
+    .fin-row{ background:#fff; border:1px solid #999; }
+    .fin-amount, .fin-sum .stat-card .num{ color:#000 !important; }
+  }
+
+  /* ---------- امور مالی و پرداختی‌ها ---------- */
+  .fin-sum{ display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:10px; margin-bottom:12px; }
+  .fin-sum .stat-card{ padding:11px 13px; }
+  .stat-card .num.money{ font-size:1.1rem; line-height:1.9; word-break:break-all; }
+  .stat-card .num.pos{ color:var(--sage); }
+  .stat-card .num.neg{ color:var(--alarm); }
+  .fin-list{ display:flex; flex-direction:column; gap:8px; }
+  .fin-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;
+    background:var(--panel-alt); border:1px solid var(--border); border-radius:12px; padding:10px 13px; }
+  .fin-row.k-income{ border-inline-start:3px solid color-mix(in srgb, var(--sage) 65%, transparent); }
+  .fin-row.k-expense{ border-inline-start:3px solid color-mix(in srgb, var(--maroon) 55%, transparent); }
+  .fin-main{ min-width:0; flex:1 1 260px; }
+  .fin-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .fin-amount{ font-weight:800; font-size:.95rem; white-space:nowrap; }
+  .fin-row.k-income .fin-amount{ color:var(--sage); }
+  .fin-row.k-expense .fin-amount{ color:var(--alarm); }
+  .fin-date{ font-size:.72rem; color:var(--text-muted); }
+  .fin-meta{ font-size:.72rem; color:var(--text-muted); margin-top:5px; display:flex; gap:4px 16px; flex-wrap:wrap; }
+  .fin-meta b{ color:var(--text); font-weight:600; }
+  .fin-desc{ font-size:.78rem; color:var(--text); margin-top:5px; white-space:pre-wrap; }
+  .fin-actions{ display:flex; gap:6px; align-items:center; }
+  .fin-legend{ display:flex; gap:16px; font-size:.7rem; color:var(--text-muted); margin:8px 0 2px; }
+  .fin-legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-inline-end:5px; vertical-align:-1px; }
+  .fin-legend i.inc{ background:var(--sage); }
+  .fin-legend i.exp{ background:var(--maroon); }
+  .fin-pair{ gap:3px; }
+  .fin-pair .trend-bar{ width:min(14px,42%); }
+  .trend-bar.inc{ background:linear-gradient(180deg,var(--sage),color-mix(in srgb,var(--sage) 55%, var(--panel))); border:1px solid color-mix(in srgb,var(--sage) 55%, transparent); }
+  .trend-bar.exp{ background:linear-gradient(180deg,var(--maroon),color-mix(in srgb,var(--maroon) 55%, var(--panel))); border:1px solid color-mix(in srgb,var(--maroon) 55%, transparent); }
+
+  /* ---------- لمس و ریزتعامل‌ها ---------- */
+  body{ -webkit-text-size-adjust:100%; touch-action:manipulation; }
+  button, .btn, .tab, .case-card, .hearing-item, .preset, .pal-swatch, .scale-chip{ -webkit-tap-highlight-color:transparent; }
+  .btn:active, .tab:active, .period-btn:active, .preset:active{ transform:scale(.98); }
+  header.top{ padding-top:calc(12px + env(safe-area-inset-top,0px)); }
+
+  /* ---------- رنگ‌بندی متنوع کارت‌ها و تب‌ها ---------- */
+  .stat-card{ border-inline-start:4px solid transparent; }
+  .stat-card.acc-brass{ border-inline-start-color:var(--brass); background:linear-gradient(135deg, color-mix(in srgb, var(--brass) 7%, var(--panel)), var(--panel) 55%); }
+  .stat-card.acc-sage{ border-inline-start-color:var(--sage); background:linear-gradient(135deg, color-mix(in srgb, var(--sage) 8%, var(--panel)), var(--panel) 55%); }
+  .stat-card.acc-maroon{ border-inline-start-color:var(--maroon); background:linear-gradient(135deg, color-mix(in srgb, var(--maroon) 8%, var(--panel)), var(--panel) 55%); }
+  .stat-card.acc-slate{ border-inline-start-color:var(--slate); background:linear-gradient(135deg, color-mix(in srgb, var(--slate) 9%, var(--panel)), var(--panel) 55%); }
+  .stat-card.acc-amber{ border-inline-start-color:var(--amber); background:linear-gradient(135deg, color-mix(in srgb, var(--amber) 8%, var(--panel)), var(--panel) 55%); }
+  .stat-card.acc-violet{ border-inline-start-color:var(--violet); background:linear-gradient(135deg, color-mix(in srgb, var(--violet) 9%, var(--panel)), var(--panel) 55%); }
+  .stat-card.acc-teal{ border-inline-start-color:var(--teal); background:linear-gradient(135deg, color-mix(in srgb, var(--teal) 9%, var(--panel)), var(--panel) 55%); }
+  .stat-card.acc-brass .num{ color:var(--brass); }
+  .stat-card.acc-sage .num{ color:var(--sage); }
+  .stat-card.acc-maroon .num{ color:var(--alarm); }
+  .stat-card.acc-slate .num{ color:var(--slate); }
+  .stat-card.acc-amber .num{ color:var(--amber); }
+  .stat-card.acc-violet .num{ color:var(--violet); }
+  .stat-card.acc-teal .num{ color:var(--teal); }
+  .stat-card.alarm{ border-inline-start-color:var(--maroon); }
+  .tab[data-view="stats"]:not(.active) .ico{ color:var(--violet); }
+  .tab[data-view="cases"]:not(.active) .ico{ color:var(--teal); }
+  .tab[data-view="followups"]:not(.active) .ico{ color:var(--amber); }
+  .tab[data-view="settings"]:not(.active) .ico{ color:var(--slate); }
+  .tab[data-view="dashboard"]:not(.active) .ico{ color:var(--brass); }
+  .tab.alarm:not(.active) .ico{ color:var(--alarm); }
+
+  /* ---------- دکمه راهنما (؟) و حباب توضیح ---------- */
+  .help-btn{
+    inline-size:1.1rem; block-size:1.1rem; border-radius:50%; border:1px solid var(--border);
+    background:var(--panel-alt); color:var(--text-muted); font-size:.68rem; font-weight:800; line-height:1;
+    display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+    vertical-align:-0.14em; margin-inline-start:5px; font-family:inherit; flex:0 0 auto;
+  }
+  .help-btn:hover{ color:var(--brass); border-color:var(--brass-dim); }
+  .help-pop{
+    position:fixed; z-index:300; background:var(--panel-alt); border:1px solid var(--brass-dim);
+    border-radius:12px; padding:12px 14px; width:min(320px, calc(100vw - 24px));
+    box-shadow:0 14px 40px color-mix(in srgb, var(--ink) 60%, transparent);
+    font-size:.78rem; line-height:1.9; color:var(--text);
+  }
+  .help-pop .hp-t{ font-weight:800; color:var(--brass); font-size:.8rem; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .help-pop .hp-x{ border:0; background:transparent; color:var(--text-muted); cursor:pointer; font-size:.95rem; padding:0 2px; font-family:inherit; line-height:1; }
+  .help-pop .hp-x:hover{ color:var(--text); }
+
+  /* ---------- یادآور پشتیبان‌گیری ---------- */
+  .backup-note{
+    background:color-mix(in srgb, var(--amber) 9%, transparent);
+    border:1px solid color-mix(in srgb, var(--amber) 45%, transparent);
+    border-radius:14px; padding:12px 14px; margin-bottom:18px;
+  }
+  .backup-note .bk-t{ font-weight:800; color:var(--amber); font-size:.85rem; margin-bottom:4px; display:flex; align-items:center; gap:6px; }
+  .backup-note .bk-b{ font-size:.78rem; line-height:1.9; }
+  .backup-note .bk-a{ display:flex; gap:8px; margin-top:9px; flex-wrap:wrap; }
+
+  /* ---------- نوار ناوبری پایین (موبایل) ---------- */
+  .bottomnav{ display:none; }
+
+  /* ---------- موبایل ---------- */
+  @media (max-width:640px){
+    header.top{ padding:9px 12px; padding-top:calc(9px + env(safe-area-inset-top,0px)); }
+    header.top .inner{ gap:8px; }
+    .brand .title{ font-size:1.02rem; }
+    .brand .subtitle{ font-size:.66rem; }
+    .head-tools{ gap:6px; }
+    .head-tools .btn{ padding:7px 10px; font-size:.72rem; }
+    .head-tools .btn.btn-primary{ padding:8px 12px; }
+    .tabs{ display:none; }
+    .bottomnav{
+      position:fixed; bottom:0; inset-inline:0; z-index:60;
+      display:flex; align-items:stretch; justify-content:space-around; gap:2px;
+      background:color-mix(in srgb, var(--ink) 93%, transparent);
+      backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+      border-top:1px solid var(--border);
+      padding:6px 6px calc(7px + env(safe-area-inset-bottom,0px));
+    }
+    .bottomnav .bn{
+      position:relative; flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:3px;
+      border:0; background:transparent; color:var(--text-muted); font-family:inherit;
+      font-size:.6rem; font-weight:700; padding:5px 2px 3px; border-radius:10px; cursor:pointer;
+    }
+    .bottomnav .bn .ico{ margin:0; width:calc(21px * var(--icon-scale,1)); height:calc(21px * var(--icon-scale,1)); }
+    .bottomnav .bn.active{ color:var(--brass); background:color-mix(in srgb, var(--brass) 13%, transparent); }
+    .bottomnav .bn[data-view="stats"]:not(.active) .ico{ color:var(--violet); }
+    .bottomnav .bn[data-view="cases"]:not(.active) .ico{ color:var(--teal); }
+    .bottomnav .bn[data-view="followups"]:not(.active) .ico{ color:var(--amber); }
+    .bottomnav .bn[data-view="settings"]:not(.active) .ico{ color:var(--slate); }
+    .bottomnav .bn.alarm{ color:var(--alarm); }
+    .bottomnav .bn.alarm:not(.active) .ico{ color:var(--alarm); }
+    .bottomnav .bn .bn-dot{
+      position:absolute; top:-1px; inset-inline-start:calc(50% + 5px);
+      background:var(--maroon); color:#fff; font-style:normal; font-size:.56rem; font-weight:800;
+      min-width:15px; height:15px; border-radius:999px; display:flex; align-items:center; justify-content:center; padding:0 4px;
+    }
+    .app{ padding-bottom:calc(88px + env(safe-area-inset-bottom,0px)); }
+    .stat-row{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .stat-card{ padding:11px 12px; border-radius:12px; }
+    .stat-card .num{ font-size:1.3rem; }
+    .stat-card .num.money{ font-size:.98rem; }
+    .fin-sum{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .detail-panel{ padding:14px 12px; }
+    .detail-head .cnum-big{ font-size:1.08rem; }
+    .info-grid{ gap:10px 14px; }
+    input[type=text], input[type=number], select, textarea{ font-size:max(16px, .875rem); }
+    .filter-bar select{ flex:1 1 40%; }
+    .modal-backdrop{ padding:0; align-items:flex-end; }
+    .modal{
+      max-width:none; border-radius:18px 18px 0 0; margin:0;
+      max-height:92vh; max-height:92dvh; overflow-y:auto;
+      padding:18px 14px calc(22px + env(safe-area-inset-bottom,0px));
+    }
+    .toast{ bottom:calc(78px + env(safe-area-inset-bottom,0px)); }
+    .appear-panel{ inset-inline:10px; width:auto; top:calc(64px + env(safe-area-inset-top,0px)); }
+    .trend-chart{ gap:3px; }
+    .hearing-item{ padding:10px; gap:10px; }
+    .date-block{ width:50px; }
+    .fu-actions, .fin-actions, .attach-actions{ width:100%; justify-content:flex-end; }
+  }
+  @media print{
+    .bottomnav, .help-btn, .help-pop, .backup-note{ display:none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORE_KEY = "cases-store-v1";
+  var APPEAR_KEY = "cases-ui-v1";
+  var META_KEY = "cases-meta-v1";
+  var DATA_VERSION = 3;
+  var MAX_IMPORT_BYTES = 250 * 1024 * 1024;
+
+  // نسخهٔ تمیز صفحه (پیش از رندر هر داده‌ای) — برای «ذخیره فایل برنامه» تا هیچ
+  // اطلاعات پرونده‌ای داخل فایل قابل اشتراک نشت نکند.
+  var PRISTINE_HTML = "";
+  try{
+    PRISTINE_HTML = "<!DOCTYPE html>\n" + document.documentElement.outerHTML
+      .replace(/^<html[^>]*>/, '<html lang="fa" dir="rtl">');
+  }catch(e){}
+
+  // نصب service worker فقط وقتی برنامه روی وب (https) میزبانی شده باشد؛
+  // در حالت فایل محلی بی‌اثر است. باعث می‌شود نسخهٔ نصب‌شده روی گوشی آفلاین هم باز شود.
+  try{
+    if("serviceWorker" in navigator && location.protocol==="https:"){
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    }
+  }catch(e){}
+
+  /* ---------------- متادیتای محلی (یادآور پشتیبان) ---------------- */
+  function loadMeta(){
+    try{
+      var m=JSON.parse(window.localStorage.getItem(META_KEY)||"{}");
+      return (m && typeof m==="object") ? m : {};
+    }catch(e){ return {}; }
+  }
+  function saveMeta(m){ try{ window.localStorage.setItem(META_KEY, JSON.stringify(m)); }catch(e){} }
+  function markBackupDone(){ var m=loadMeta(); m.lastBackupAt=Date.now(); saveMeta(m); }
+  function backupNudge(){
+    if(!state.cases.length) return null;
+    var m=loadMeta(), now=Date.now(), DAY=86400000;
+    if(m.backupSnoozeUntil && now<m.backupSnoozeUntil) return null;
+    if(m.lastBackupAt){
+      var d=Math.floor((now-m.lastBackupAt)/DAY);
+      return d>=30 ? {days:d} : null;
+    }
+    var oldest=null;
+    state.cases.forEach(function(c){ var t=Date.parse(c.createdAt||""); if(t && (!oldest||t<oldest)) oldest=t; });
+    return (oldest && now-oldest>7*DAY) ? {days:null} : null;
+  }
+
+  /* ---------------- راهنماهای ؟ ---------------- */
+  var HELP={
+    "fin-section":{t:"امور مالی پرونده", b:"مبالغ به تومان ثبت می‌شود و جمع آن‌ها در تب «آمار» نیز به تفکیک درآمد و هزینه منظور می‌گردد. هزینه‌ای که شخصاً به‌جای موکل پرداخته‌اید را با پرداخت‌کنندهٔ «وکیل» ثبت کنید؛ دریافتیِ «استرداد هزینه‌ها از موکل» ماندهٔ قابل مطالبه را کم می‌کند."},
+    "fin-clientdue":{t:"ماندهٔ قابل مطالبه از موکل", b:"جمع هزینه‌هایی که با پرداخت‌کنندهٔ «وکیل» ثبت شده، منهای دریافتی‌های «استرداد هزینه‌ها از موکل». مبلغ مثبت یعنی موکل هنوز همین مقدار از هزینه‌ها را به شما بدهکار است."},
+    "fin-payer":{t:"پرداخت‌کننده", b:"اگر خودتان به‌جای موکل پرداخت کرده‌اید «وکیل» را انتخاب کنید تا مبلغ در «ماندهٔ قابل مطالبه از موکل» لحاظ شود."},
+    "attachments":{t:"پیوست‌ها", b:"پیوست‌ها در حافظهٔ همین مرورگر ذخیره می‌شوند و در «پشتیبان کامل» نیز گنجانده می‌شوند. برای ایمنی، فایل پشتیبان را در محل امن نگه دارید."},
+    "attach-modal":{t:"ذخیرهٔ پیوست", b:"فایل روی همین دستگاه (حافظهٔ مرورگر) ذخیره می‌شود و همراه «پشتیبان کامل» منتقل می‌گردد. ذخیرهٔ فایل‌های خیلی حجیم ممکن است کند باشد."},
+    "followups-tab":{t:"پیگیری‌ها", b:"افزودن پیگیری تازه از داخل صفحهٔ همان پرونده انجام می‌شود؛ این صفحه برای مرور همهٔ پیگیری‌ها و علامت‌زدن موارد انجام‌شده است."},
+    "overdue-dash":{t:"سررسیدهای گذشته", b:"پس از انجام یا منتفی‌شدن هر مورد، در صفحهٔ پرونده آن را «انجام شد» علامت بزنید تا از این فهرست خارج شود."},
+    "profile-title":{t:"عنوان سربرگ", b:"همین عنوان در بالای صفحه و در برگهٔ چاپی پرونده نمایش داده می‌شود."},
+    "profile-role":{t:"سمت حرفه‌ای", b:"فقط در برگهٔ چاپی، زیر نام درج می‌شود."},
+    "court-type":{t:"مرجع رسیدگی", b:"رنگ نوار کنارهٔ پرونده و برچسب‌ها بر اساس همین مرجع تعیین می‌شود؛ عنوان طرفین نیز متناسب با آن تغییر می‌کند."},
+    "outcome-date":{t:"تاریخ نتیجه", b:"اگر برد/باخت را انتخاب کنید و تاریخ خالی باشد، تاریخ امروز ثبت می‌شود."},
+    "next-action":{t:"وضعیت فعلی", b:"این یادداشت در بالای صفحهٔ پرونده نمایش داده می‌شود."},
+    "date-2digit":{t:"تاریخ شمسی", b:"سال ۲رقمی نسبت به امروز تفسیر می‌شود؛ مثلاً ۸۵ می‌شود ۱۳۸۵ و ۰۵ می‌شود ۱۴۰۵."},
+    "deadline-calc":{t:"محاسبهٔ سررسید", b:"این محاسبه صرفاً تقویمی است و اعداد پیش‌فرض فقط برای تسریع کار است؛ مبدأ مهلت، ایام تعطیل، اقامت خارج از کشور و مقررات خاص حاکم بر همان پرونده را جداگانه بررسی کنید."}
+  };
+  function helpBtn(key){
+    return '<button type="button" class="help-btn no-print" data-act="help" data-help="'+key+'" aria-label="راهنما">؟</button>';
+  }
+  var helpPopEl=null, helpKeyOpen=null;
+  function closeHelp(){
+    if(helpPopEl && helpPopEl.parentNode) helpPopEl.parentNode.removeChild(helpPopEl);
+    helpPopEl=null; helpKeyOpen=null;
+  }
+  function toggleHelp(anchor, key){
+    if(helpPopEl && helpKeyOpen===key){ closeHelp(); return; }
+    closeHelp();
+    var h=HELP[key]; if(!h) return;
+    var d=document.createElement("div");
+    d.className="help-pop"; d.setAttribute("role","note"); d.setAttribute("dir","rtl");
+    d.innerHTML='<div class="hp-t"><span>'+h.t+'</span><button type="button" class="hp-x" aria-label="بستن">✕</button></div><div class="hp-b">'+h.b+'</div>';
+    document.body.appendChild(d);
+    helpPopEl=d; helpKeyOpen=key;
+    try{
+      var r=anchor.getBoundingClientRect();
+      var vw=window.innerWidth||360, vh=window.innerHeight||640;
+      var w=Math.min(320, vw-24);
+      var left=Math.max(12, Math.min(r.left + r.width/2 - w/2, vw-w-12));
+      var top=r.bottom+8;
+      d.style.left=left+"px"; d.style.top=top+"px";
+      var hgt=d.offsetHeight||0;
+      if(top+hgt>vh-10){
+        var t2=r.top-hgt-8;
+        d.style.top=(t2>10?t2:Math.max(10,vh-hgt-10))+"px";
+      }
+    }catch(e){ d.style.left="12px"; d.style.top="80px"; }
+    d.querySelector(".hp-x").addEventListener("click",function(ev){ ev.stopPropagation(); closeHelp(); });
+    d.addEventListener("click",function(ev){ ev.stopPropagation(); });
+  }
+  document.addEventListener("pointerdown",function(ev){
+    if(!helpPopEl) return;
+    if(helpPopEl.contains(ev.target)) return;
+    if(ev.target && ev.target.closest && ev.target.closest('[data-act="help"]')) return;
+    closeHelp();
+  },true);
+  window.addEventListener("scroll",function(){ closeHelp(); },true);
+  window.addEventListener("resize",function(){ closeHelp(); });
+  var FONT_STEPS = [
+    {v:0.85,label:"کوچک"},{v:1,label:"متوسط"},{v:1.12,label:"بزرگ"},{v:1.28,label:"خیلی بزرگ"}
+  ];
+  var ICON_STEPS = [
+    {v:0.85,label:"کوچک"},{v:1,label:"متوسط"},{v:1.2,label:"بزرگ"},{v:1.45,label:"خیلی بزرگ"}
+  ];
+  var FONT_MIN=0.8, FONT_MAX=1.45, ICON_MIN=0.75, ICON_MAX=1.6;
+  var PALETTES = [
+    {id:"brass",label:"برنز شب",dots:["#14171d","#cfa64d","#ece6d6"]},
+    {id:"pearl",label:"صدف روز",dots:["#f3eee4","#9a6b24","#2a2418"]},
+    {id:"navy",label:"نیلی طلایی",dots:["#0c1422","#d4b46a","#e7eef6"]},
+    {id:"olive",label:"زیتونی",dots:["#131610","#c6b07a","#e7eadc"]},
+    {id:"wine",label:"یاقوتی",dots:["#180e12","#d4b07a","#f3e6e8"]},
+    {id:"sea",label:"دریایی",dots:["#0c1416","#7ec8bc","#e4eef0"]},
+    {id:"slate",label:"ذغالی",dots:["#101318","#8aa4c4","#e6eaf0"]},
+    {id:"sand",label:"ماسه روشن",dots:["#f6eedc","#8a5a28","#2c2418"]}
+  ];
+  function defaultAppearance(){ return {palette:"brass", fontScale:1, iconScale:1}; }
+  function loadAppearance(){
+    var a=defaultAppearance();
+    try{
+      var raw=window.localStorage.getItem(APPEAR_KEY);
+      if(raw){
+        var p=JSON.parse(raw);
+        if(p && typeof p==="object"){
+          if(typeof p.palette==="string") a.palette=p.palette;
+          if(typeof p.fontScale==="number") a.fontScale=p.fontScale;
+          if(typeof p.iconScale==="number") a.iconScale=p.iconScale;
+        }
+      }
+    }catch(e){}
+    var known=false;
+    for(var i=0;i<PALETTES.length;i++) if(PALETTES[i].id===a.palette) known=true;
+    if(!known) a.palette="brass";
+    return a;
+  }
+  function applyAppearance(){
+    var a=state.appearance||defaultAppearance();
+    document.documentElement.setAttribute("data-palette", a.palette);
+    document.documentElement.style.setProperty("--ui-scale", String(a.fontScale));
+    document.documentElement.style.setProperty("--icon-scale", String(a.iconScale));
+    try{
+      var ink=getComputedStyle(document.documentElement).getPropertyValue("--ink").trim();
+      var mt=document.getElementById("metaTheme");
+      if(ink && mt) mt.setAttribute("content", ink);
+    }catch(e){}
+  }
+  function saveAppearance(){
+    try{ window.localStorage.setItem(APPEAR_KEY, JSON.stringify(state.appearance)); }catch(e){}
+  }
+  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+  function round2(n){ return Math.round(n*100)/100; }
+  function liveAppearance(patch){
+    state.appearance=Object.assign({}, state.appearance||defaultAppearance(), patch);
+    saveAppearance();
+    applyAppearance();
+    var a=state.appearance;
+    var f=document.getElementById("fontScaleVal");
+    var i=document.getElementById("iconScaleVal");
+    var f2=document.getElementById("fontScaleVal2");
+    var i2=document.getElementById("iconScaleVal2");
+    var t=toFaDigits(Math.round(a.fontScale*100))+"٪";
+    var k=toFaDigits(Math.round(a.iconScale*100))+"٪";
+    if(f) f.textContent=t; if(f2) f2.textContent=t;
+    if(i) i.textContent=k; if(i2) i2.textContent=k;
+  }
+  function bumpAppearance(key, dir){
+    var min=key==="fontScale"?FONT_MIN:ICON_MIN;
+    var max=key==="fontScale"?FONT_MAX:ICON_MAX;
+    var next=clamp(round2((state.appearance[key]||1)+dir*0.07), min, max);
+    var patch={}; patch[key]=next;
+    liveAppearance(patch);
+    var acts=key==="fontScale"?["font-range","font-range-panel"]:["icon-range","icon-range-panel"];
+    acts.forEach(function(act){
+      root.querySelectorAll('[data-act="'+act+'"]').forEach(function(el){ el.value=String(next); });
+    });
+  }
+  function patchAppearance(patch){
+    liveAppearance(patch);
+    render();
+  }
+  function stepActive(steps, val){
+    var best=steps[0].v, bd=Math.abs(steps[0].v-val);
+    for(var i=1;i<steps.length;i++){
+      var d=Math.abs(steps[i].v-val);
+      if(d<bd){ bd=d; best=steps[i].v; }
+    }
+    return best;
+  }
+  function ico(name){
+    var p={
+      dash:'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/>',
+      chart:'<path d="M4 19V11"/><path d="M10 19V5"/><path d="M16 19v-6"/><path d="M22 19H2"/>',
+      folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+      list:'<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.2" fill="currentColor" stroke="none"/>',
+      user:'<circle cx="12" cy="8" r="3.2"/><path d="M5 19c1.2-3.2 3.4-5 7-5s5.8 1.8 7 5"/>',
+      download:'<path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>',
+      upload:'<path d="M12 20V8"/><path d="M7 13l5-5 5 5"/><path d="M5 20h14"/>',
+      plus:'<path d="M12 5v14M5 12h14"/>',
+      minus:'<path d="M5 12h14"/>',
+      palette:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="14.5" cy="14.5" r="1.2" fill="currentColor" stroke="none"/>',
+      type:'<path d="M4 19h6M7 19V6h8v13M11 6h8M15 6v4"/>',
+      icon:'<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+      coins:'<circle cx="9" cy="9" r="5.5"/><path d="M14.7 7.1a5.5 5.5 0 1 1-7.6 7.6"/><path d="M7 9h4M9 7v4"/>'
+    };
+    return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(p[name]||"")+'</svg>';
+  }
+
+  function formatBytes(n){
+    if(n<1024) return toFaDigits(n)+" B";
+    if(n<1024*1024) return toFaDigits((n/1024).toFixed(1))+" KB";
+    return toFaDigits((n/1024/1024).toFixed(1))+" MB";
+  }
+
+  /* ---------------- attachments (IndexedDB) ----------------
+     پیوست‌ها به‌صورت فایل باینری در IndexedDB همین مرورگر ذخیره می‌شوند —
+     جدا از localStorage (که فقط داده‌های متنی پرونده را نگه می‌دارد).
+     در «پشتیبان کامل» این پیوست‌ها به‌صورت dataURL داخل JSON گنجانده و
+     هنگام بازیابی دوباره به فایل تبدیل می‌شوند. */
+  var FILES_DB_NAME="case-tracker-files", FILES_DB_VERSION=1, FILES_STORE="attachments";
+  var filesDbPromise=null;
+  var attachmentsOK = !!(window.indexedDB);
+  function openFilesDB(){
+    if(filesDbPromise) return filesDbPromise;
+    filesDbPromise=new Promise(function(resolve,reject){
+      if(!window.indexedDB){ reject(new Error("no-indexeddb")); return; }
+      var req;
+      try{ req=window.indexedDB.open(FILES_DB_NAME, FILES_DB_VERSION); }
+      catch(e){ reject(e); return; }
+      req.onupgradeneeded=function(ev){
+        var db=ev.target.result;
+        if(!db.objectStoreNames.contains(FILES_STORE)){
+          var store=db.createObjectStore(FILES_STORE,{keyPath:"id"});
+          store.createIndex("caseId","caseId",{unique:false});
+        }
+      };
+      req.onsuccess=function(ev){ resolve(ev.target.result); };
+      req.onerror=function(ev){ reject(ev.target.error||new Error("open-failed")); };
+      req.onblocked=function(){ reject(new Error("blocked")); };
+    });
+    return filesDbPromise;
+  }
+  function addAttachment(rec){
+    return openFilesDB().then(function(db){
+      return new Promise(function(resolve,reject){
+        var tx=db.transaction(FILES_STORE,"readwrite");
+        tx.objectStore(FILES_STORE).add(rec);
+        tx.oncomplete=function(){ resolve(); };
+        tx.onerror=function(){ reject(tx.error); };
+      });
+    });
+  }
+  function getAttachmentsForCase(caseId){
+    return openFilesDB().then(function(db){
+      return new Promise(function(resolve,reject){
+        var tx=db.transaction(FILES_STORE,"readonly");
+        var idx=tx.objectStore(FILES_STORE).index("caseId");
+        var req=idx.getAll(caseId);
+        req.onsuccess=function(){ resolve(req.result||[]); };
+        req.onerror=function(){ reject(req.error); };
+      });
+    });
+  }
+  function deleteAttachment(id){
+    return openFilesDB().then(function(db){
+      return new Promise(function(resolve,reject){
+        var tx=db.transaction(FILES_STORE,"readwrite");
+        tx.objectStore(FILES_STORE).delete(id);
+        tx.oncomplete=function(){ resolve(); };
+        tx.onerror=function(){ reject(tx.error); };
+      });
+    });
+  }
+  function deleteAttachmentsForCase(caseId){
+    return openFilesDB().then(function(db){
+      return new Promise(function(resolve,reject){
+        var tx=db.transaction(FILES_STORE,"readwrite");
+        var idx=tx.objectStore(FILES_STORE).index("caseId");
+        var cur=idx.openCursor(caseId);
+        cur.onsuccess=function(ev){
+          var c=ev.target.result;
+          if(c){ c.delete(); c.continue(); } else { resolve(); }
+        };
+        cur.onerror=function(){ reject(cur.error); };
+      });
+    }).catch(function(){ /* بی‌اهمیت اگر پیوستی نبوده */ });
+  }
+  function getAllAttachments(){
+    if(!attachmentsOK) return Promise.resolve([]);
+    return openFilesDB().then(function(db){
+      return new Promise(function(resolve,reject){
+        var tx=db.transaction(FILES_STORE,"readonly");
+        var req=tx.objectStore(FILES_STORE).getAll();
+        req.onsuccess=function(){ resolve(req.result||[]); };
+        req.onerror=function(){ reject(req.error); };
+      });
+    });
+  }
+  function clearAllAttachments(){
+    if(!attachmentsOK) return Promise.resolve();
+    return openFilesDB().then(function(db){
+      return new Promise(function(resolve,reject){
+        var tx=db.transaction(FILES_STORE,"readwrite");
+        tx.objectStore(FILES_STORE).clear();
+        tx.oncomplete=function(){ resolve(); };
+        tx.onerror=function(){ reject(tx.error); };
+      });
+    });
+  }
+  function blobToDataURL(blob){
+    return new Promise(function(resolve,reject){
+      var r=new FileReader(); r.onload=function(){resolve(r.result);}; r.onerror=function(){reject(r.error);}; r.readAsDataURL(blob);
+    });
+  }
+  function dataURLToBlob(dataURL){
+    var m=/^data:([^;,]*)(;base64)?,(.*)$/.exec(dataURL||"");
+    if(!m) throw new Error("bad-attachment-data");
+    var mime=m[1]||"application/octet-stream", raw=m[2]?atob(m[3]):decodeURIComponent(m[3]);
+    var arr=new Uint8Array(raw.length); for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+    return new Blob([arr],{type:mime});
+  }
+
+  var STATUS_META = {
+    active:    { label:"در جریان",     badge:"badge-brass" },
+    closed:    { label:"خاتمه‌یافته",  badge:"badge-sage" },
+    suspended: { label:"معلق",         badge:"badge-muted" }
+  };
+
+  var OUTCOME_META = {
+    pending: { label:"بدون نتیجه", badge:"badge-muted" },
+    win:     { label:"برد",        badge:"badge-sage" },
+    loss:    { label:"باخت",       badge:"badge-maroon" }
+  };
+
+  // مرجع رسیدگی — رنگ هر مرجع در نوار کناری کارت پرونده و برچسب‌ها استفاده می‌شود
+  var COURTS = {
+    civil:      { label:"حقوقی",              color:"var(--brass)",  badge:"badge-brass",  p:"خواهان",   d:"خوانده" },
+    criminal:   { label:"کیفری",              color:"var(--maroon)", badge:"badge-maroon", p:"شاکی",     d:"متهم" },
+    revolution: { label:"انقلاب",             color:"var(--violet)", badge:"badge-violet", p:"شاکی",     d:"متهم" },
+    admin:      { label:"دیوان عدالت اداری",  color:"var(--slate)",  badge:"badge-slate",  p:"شاکی",     d:"طرف شکایت" },
+    appeal:     { label:"تجدیدنظر",           color:"var(--teal)",   badge:"badge-teal",   p:"تجدیدنظرخواه", d:"تجدیدنظرخوانده" },
+    peace:      { label:"شورای حل اختلاف / صلح", color:"var(--sage)", badge:"badge-sage",  p:"خواهان",   d:"خوانده" },
+    execution:  { label:"اجرای احکام",        color:"var(--amber)",  badge:"badge-amber",  p:"محکوم‌له", d:"محکوم‌علیه" }
+  };
+  function court(k){ return COURTS[k] || COURTS.civil; }
+
+  var EVENT_TYPES = {
+    hearing:  { label:"وقت رسیدگی",            dot:"maroon", badge:"badge-maroon", track:true },
+    deadline: { label:"موعد (رفع نقص / مهلت)", dot:"amber",  badge:"badge-amber",  track:true },
+    motion:   { label:"لایحه / دادخواست",      dot:"brass",  badge:"badge-brass" },
+    verdict:  { label:"رأی / دادنامه",         dot:"sage",   badge:"badge-sage" },
+    notice:   { label:"ابلاغ",                 dot:"slate",  badge:"badge-slate" },
+    action:   { label:"اقدام انجام‌شده",       dot:"slate",  badge:"badge-slate" },
+    other:    { label:"سایر",                  dot:"muted",  badge:"badge-muted" }
+  };
+  function isTracked(t){ return !!(EVENT_TYPES[t] && EVENT_TYPES[t].track); }
+
+  // مهلت‌های پرکاربرد — صرفاً برای محاسبهٔ سریع تاریخ؛ عدد روز قابل ویرایش است
+  var PRESETS = [
+    { label:"رفع نقص",        days:10 },
+    { label:"واخواهی",        days:20 },
+    { label:"تجدیدنظرخواهی",  days:20 },
+    { label:"فرجام‌خواهی",    days:20 },
+    { label:"اعتراض ثالث",    days:20 },
+    { label:"۳ روز",          days:3  },
+    { label:"۷ روز",          days:7  },
+    { label:"۳۰ روز",         days:30 }
+  ];
+
+  var MONTH_NAMES = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+
+  // پیگیری: کارهای پیش‌رو با اولویت فوری/عادی — مستقل از رویدادهای رسمی تاریخ‌دار پرونده
+  var PRIORITY_META = {
+    urgent: { label:"فوری", badge:"badge-maroon" },
+    normal: { label:"عادی", badge:"badge-slate" }
+  };
+
+  // امور مالی — همهٔ مبالغ به تومان ثبت و جمع زده می‌شوند
+  var FIN_KIND = {
+    income:  { label:"دریافتی",         badge:"badge-sage"   },
+    expense: { label:"هزینه / پرداختی", badge:"badge-maroon" }
+  };
+  var FIN_CATS = {
+    fee:        { kind:"income",  label:"حق‌الوکاله" },
+    consult:    { kind:"income",  label:"حق‌المشاوره" },
+    reimburse:  { kind:"income",  label:"استرداد هزینه‌ها از موکل" },
+    other_in:   { kind:"income",  label:"سایر دریافتی‌ها" },
+    court_cost: { kind:"expense", label:"هزینه دادرسی" },
+    expert:     { kind:"expense", label:"دستمزد کارشناسی" },
+    execution:  { kind:"expense", label:"هزینه اجرایی / نیم‌عشر" },
+    publication:{ kind:"expense", label:"هزینه نشر آگهی" },
+    stamp:      { kind:"expense", label:"ابطال تمبر / تمبر مالیاتی" },
+    notary:     { kind:"expense", label:"هزینه دفترخانه / گواهی" },
+    travel:     { kind:"expense", label:"ایاب‌وذهاب و مأموریت" },
+    office:     { kind:"expense", label:"هزینه دفتری (کپی، پرینت و…)" },
+    other_out:  { kind:"expense", label:"سایر هزینه‌ها" }
+  };
+  var FIN_PAYERS = {
+    lawyer: { label:"وکیل (شخصاً)" },
+    client: { label:"موکل" },
+    other:  { label:"شخص ثالث / سایر" }
+  };
+  function finDefaultCat(kind){ return kind==="income"?"fee":"court_cost"; }
+  function finFallbackCat(kind){ return kind==="income"?"other_in":"other_out"; }
+  function finDefaultPayer(kind){ return kind==="income"?"client":"lawyer"; }
+
+  var state = {
+    profile:null,
+    cases: [], view:"dashboard", selectedCaseId:null,
+    searchQuery:"", filterCourt:"", filterStatus:"active",
+    loading:true, modal:null, toast:null,
+    attachmentsByCase:{},
+    appearanceOpen:false,
+    appearance:null, statsPeriod:"month"
+  };
+  state.appearance=loadAppearance();
+  applyAppearance();
+
+  /* ---------------- helpers ---------------- */
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function pad2(n){ n=String(n); return n.length<2?"0"+n:n; }
+  function pad4(n){ n=String(n); while(n.length<4) n="0"+n; return n; }
+  var FA_DIGITS=["۰","۱","۲","۳","۴","۵","۶","۷","۸","۹"];
+  function toFaDigits(s){ return String(s).replace(/[0-9]/g,function(d){return FA_DIGITS[+d];}); }
+  function toLatinDigits(s){
+    return String(s).replace(/[۰-۹]/g,function(d){return FA_DIGITS.indexOf(d);})
+                    .replace(/[٠-٩]/g,function(d){return "٠١٢٣٤٥٦٧٨٩".indexOf(d);});
+  }
+  function escapeHtml(s){
+    return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function todayJalali(){ return jalaali.toJalaali(new Date()); }
+  function todayStr(){ var t=todayJalali(); return pad4(t.jy)+"/"+pad2(t.jm)+"/"+pad2(t.jd); }
+  function parseDateStr(s){
+    var m=/^(\d{4})\/(\d{2})\/(\d{2})$/.exec(s||"");
+    if(!m) return null;
+    var d={jy:+m[1],jm:+m[2],jd:+m[3]};
+    return jalaali.isValidJalaaliDate(d.jy,d.jm,d.jd)?d:null;
+  }
+  // سال دوقمی (مثلاً ۸۵) با پنجرهٔ لغزان نسبت به سال جاری باز می‌شود:
+  // ۸۵ → ۱۳۸۵، ۰۵ → ۱۴۰۵. قبلاً همه به ۱۴۰۰ اضافه می‌شدند (۸۵ → ۱۴۸۵).
+  function expandShortYear(jy){
+    if(jy>=100) return jy;
+    var now=todayJalali().jy, start=now-80;
+    var guess=Math.floor(start/100)*100+jy;
+    if(guess<start) guess+=100;
+    if(guess>=start+100) guess-=100;
+    return guess;
+  }
+  function migrateDateStr(s){
+    if(!s) return "";
+    var n=normalizeJalaliInput(s);
+    return n||"";
+  }
+  function normalizeJalaliInput(raw){
+    if(!raw) return null;
+    var s=toLatinDigits(raw).trim().replace(/[-.]/g,"/").replace(/\s+/g,"");
+    var m=/^(\d{2,4})\/(\d{1,2})\/(\d{1,2})$/.exec(s);
+    if(!m) return null;
+    var jy=+m[1], jm=+m[2], jd=+m[3];
+    jy=expandShortYear(jy);
+    if(!jalaali.isValidJalaaliDate(jy,jm,jd)) return null;
+    return pad4(jy)+"/"+pad2(jm)+"/"+pad2(jd);
+  }
+  function formatDateDisplay(s){ return toFaDigits(s); }
+  function addDaysToJalali(dateStr, n){
+    var d=parseDateStr(dateStr); if(!d) return null;
+    var r=jalaali.d2j(jalaali.j2d(d.jy,d.jm,d.jd)+n);
+    return pad4(r.jy)+"/"+pad2(r.jm)+"/"+pad2(r.jd);
+  }
+  function daysDiff(dateStr){
+    var d=parseDateStr(dateStr); if(!d) return null;
+    var t=todayJalali();
+    return jalaali.j2d(d.jy,d.jm,d.jd)-jalaali.j2d(t.jy,t.jm,t.jd);
+  }
+  function urgencyClass(diff){
+    if(diff==null) return "far";
+    if(diff<0) return "past";
+    if(diff<=3) return "soon";
+    if(diff<=14) return "mid";
+    return "far";
+  }
+  function urgencyLabel(diff){
+    if(diff<0) return toFaDigits(-diff)+" روز گذشته";
+    if(diff===0) return "امروز";
+    if(diff===1) return "فردا";
+    return toFaDigits(diff)+" روز مانده";
+  }
+
+  /* ---------------- money helpers ---------------- */
+  function parseAmount(raw){
+    if(raw==null) return null;
+    var s=toLatinDigits(String(raw)).replace(/[,،٬\s]/g,"");
+    if(!/^\d+$/.test(s)) return null;
+    var n=parseInt(s,10);
+    if(!isFinite(n)||n<=0||n>1e15) return null;
+    return n;
+  }
+  function formatMoney(n){
+    n=Math.round(n||0);
+    var neg=n<0; n=Math.abs(n);
+    var s=String(n).replace(/\B(?=(\d{3})+(?!\d))/g,"٬");
+    return (neg?"−":"")+toFaDigits(s);
+  }
+  function numToWordsFa(n){
+    n=Math.round(Math.abs(n||0));
+    if(n===0) return "صفر";
+    var ones=["","یک","دو","سه","چهار","پنج","شش","هفت","هشت","نه"];
+    var teens=["ده","یازده","دوازده","سیزده","چهارده","پانزده","شانزده","هفده","هجده","نوزده"];
+    var tens=["","","بیست","سی","چهل","پنجاه","شصت","هفتاد","هشتاد","نود"];
+    var hundreds=["","صد","دویست","سیصد","چهارصد","پانصد","ششصد","هفتصد","هشتصد","نهصد"];
+    var scales=["","هزار","میلیون","میلیارد","هزار میلیارد"];
+    function three(x){
+      var p=[];
+      if(x>=100){ p.push(hundreds[Math.floor(x/100)]); x=x%100; }
+      if(x>=20){ var t=tens[Math.floor(x/10)], o=x%10; p.push(o?t+" و "+ones[o]:t); }
+      else if(x>=10){ p.push(teens[x-10]); }
+      else if(x>0){ p.push(ones[x]); }
+      return p.join(" و ");
+    }
+    var parts=[], i=0;
+    while(n>0 && i<scales.length){
+      var chunk=n%1000;
+      if(chunk) parts.unshift(three(chunk)+(scales[i]?" "+scales[i]:""));
+      n=Math.floor(n/1000); i++;
+    }
+    return parts.join(" و ");
+  }
+
+
+  function isoToJalaliStr(iso){
+    if(!iso) return "";
+    var d=new Date(iso); if(isNaN(d.getTime())) return "";
+    var j=jalaali.toJalaali(d.getFullYear(),d.getMonth()+1,d.getDate());
+    return pad4(j.jy)+"/"+pad2(j.jm)+"/"+pad2(j.jd);
+  }
+  function statDateToJdn(s){ var d=parseDateStr(s); return d?jalaali.j2d(d.jy,d.jm,d.jd):null; }
+  function statsBounds(period){
+    var t=todayJalali(), end=jalaali.j2d(t.jy,t.jm,t.jd), start=end;
+    if(period==="week") start=end-6;
+    else if(period==="year") start=jalaali.j2d(t.jy,1,1);
+    else start=jalaali.j2d(t.jy,t.jm,1);
+    return {start:start,end:end,t:t};
+  }
+  function inStatsPeriod(dateStr,period){
+    var x=statDateToJdn(dateStr); if(x===null) return false;
+    var b=statsBounds(period); return x>=b.start && x<=b.end;
+  }
+  function statsPeriodLabel(period){
+    if(period==="week") return "۷ روز اخیر";
+    if(period==="year") return "سال "+toFaDigits(todayJalali().jy);
+    var t=todayJalali(); return MONTH_NAMES[t.jm-1]+" "+toFaDigits(t.jy);
+  }
+  function statsBucketInfo(period,dateStr){
+    var d=parseDateStr(dateStr); if(!d) return null;
+    var b=statsBounds(period), jdn=jalaali.j2d(d.jy,d.jm,d.jd); if(jdn<b.start||jdn>b.end) return null;
+    if(period==="week") return {key:String(jdn), label:toFaDigits(d.jm)+"/"+toFaDigits(d.jd)};
+    if(period==="year") return {key:String(d.jm), label:MONTH_NAMES[d.jm-1]};
+    var w=Math.floor((d.jd-1)/7)+1;
+    var from=(w-1)*7+1, to=Math.min(w*7,jalaali.jalaaliMonthLength(d.jy,d.jm));
+    return {key:String(w), label:toFaDigits(from)+"–"+toFaDigits(to)};
+  }
+  function makeStatsBuckets(period){
+    var b=statsBounds(period), arr=[], i;
+    if(period==="week"){
+      for(i=b.start;i<=b.end;i++){ var d=jalaali.d2j(i); arr.push({key:String(i),label:toFaDigits(d.jm)+"/"+toFaDigits(d.jd),value:0}); }
+    } else if(period==="year"){
+      for(i=1;i<=12;i++) arr.push({key:String(i),label:MONTH_NAMES[i-1],value:0});
+    } else {
+      var ml=jalaali.jalaaliMonthLength(b.t.jy,b.t.jm), wc=Math.ceil(ml/7);
+      for(i=1;i<=wc;i++){ var f=(i-1)*7+1, to=Math.min(i*7,ml); arr.push({key:String(i),label:toFaDigits(f)+"–"+toFaDigits(to),value:0}); }
+    }
+    return arr;
+  }
+  function collectStats(period){
+    period=period||"month";
+    var r={cases:0,followups:0,motions:0,wins:0,losses:0,buckets:makeStatsBuckets(period)};
+    var bm={}; r.buckets.forEach(function(x){bm[x.key]=x;});
+    function hit(date,kind){
+      if(!inStatsPeriod(date,period)) return;
+      r[kind]++;
+      var bi=statsBucketInfo(period,date); if(bi&&bm[bi.key]) bm[bi.key].value++;
+    }
+    state.cases.forEach(function(c){
+      hit(c.openedDate||isoToJalaliStr(c.createdAt),"cases");
+      (c.followups||[]).forEach(function(f){ hit(f.date||isoToJalaliStr(f.createdAt),"followups"); });
+      (c.events||[]).forEach(function(e){ if(e.type==="motion") hit(e.date,"motions"); });
+      if(c.outcome==="win") hit(c.outcomeDate,"wins");
+      if(c.outcome==="loss") hit(c.outcomeDate,"losses");
+    });
+    return r;
+  }
+  function collectFinStats(period){
+    period=period||"month";
+    var r={income:0,expense:0,lawyerPaid:0,count:0,
+      buckets:makeStatsBuckets(period).map(function(b){ return {key:b.key,label:b.label,inc:0,exp:0}; })};
+    var bm={}; r.buckets.forEach(function(x){ bm[x.key]=x; });
+    state.cases.forEach(function(c){
+      (c.finance||[]).forEach(function(x){
+        if(!inStatsPeriod(x.date,period)) return;
+        r.count++;
+        if(x.kind==="income"){ r.income+=x.amount; }
+        else { r.expense+=x.amount; if(x.payer==="lawyer") r.lawyerPaid+=x.amount; }
+        var bi=statsBucketInfo(period,x.date);
+        if(bi&&bm[bi.key]){ if(x.kind==="income") bm[bi.key].inc+=x.amount; else bm[bi.key].exp+=x.amount; }
+      });
+    });
+    r.net=r.income-r.expense;
+    return r;
+  }
+
+  /* ---------------- storage ---------------- */
+  // برخی محیط‌ها (مثل پیش‌نمایش داخل برنامه) دسترسی به حافظهٔ مرورگر را مسدود می‌کنند.
+  // در آن حالت برنامه با حافظهٔ موقتِ همین جلسه کار می‌کند و هشدار می‌دهد.
+  var storageOK=(function(){
+    try{
+      var k="__probe__";
+      window.localStorage.setItem(k,"1");
+      window.localStorage.removeItem(k);
+      return true;
+    }catch(e){ return false; }
+  })();
+
+  function safeString(v,max){ return typeof v==="string"?v.slice(0,max||20000):""; }
+  function safeId(v){ return typeof v==="string" && /^[A-Za-z0-9_-]{1,80}$/.test(v); }
+  function safeEnum(v,obj,fallback){ return typeof v==="string" && Object.prototype.hasOwnProperty.call(obj,v)?v:fallback; }
+  function normalizeImportedData(parsed){
+    if(!parsed || typeof parsed!=="object" || !Array.isArray(parsed.cases)) throw new Error("bad-root");
+    if(parsed.cases.length>10000) throw new Error("too-many-cases");
+    var seenCase={};
+    var cases=parsed.cases.map(function(src){
+      if(!src || typeof src!=="object" || Array.isArray(src)) throw new Error("bad-case");
+      var id=safeId(src.id)?src.id:uid(); if(seenCase[id]) id=uid(); seenCase[id]=1;
+      var c={
+        id:id, courtType:safeEnum(src.courtType,COURTS,"civil"), status:safeEnum(src.status,STATUS_META,"active"),
+        caseNumber:safeString(src.caseNumber,300), fileNumber:safeString(src.fileNumber,300), branch:safeString(src.branch,500),
+        client:safeString(src.client,1000), clientRole:safeString(src.clientRole,500), plaintiff:safeString(src.plaintiff,2000),
+        defendant:safeString(src.defendant,2000), subject:safeString(src.subject,3000), nextAction:safeString(src.nextAction,20000),
+        openedDate:migrateDateStr(src.openedDate||"")||isoToJalaliStr(src.createdAt)||todayStr(),
+        outcome:safeEnum(src.outcome,OUTCOME_META,"pending"), outcomeDate:migrateDateStr(src.outcomeDate||""),
+        createdAt:safeString(src.createdAt,40)||new Date().toISOString(), updatedAt:safeString(src.updatedAt,40)||new Date().toISOString(),
+        events:[], followups:[], finance:[]
+      };
+      var evs=Array.isArray(src.events)?src.events:[]; if(evs.length>20000) throw new Error("too-many-events");
+      var seenEv={};
+      c.events=evs.map(function(e){
+        if(!e||typeof e!=="object") throw new Error("bad-event");
+        var eid=safeId(e.id)?e.id:uid(); if(seenEv[eid]) eid=uid(); seenEv[eid]=1;
+        var date=migrateDateStr(e.date); if(!date) throw new Error("bad-event-date");
+        return {id:eid,type:safeEnum(e.type,EVENT_TYPES,"other"),date:date,title:safeString(e.title,3000),description:safeString(e.description,20000),done:!!e.done,createdAt:safeString(e.createdAt,40)||new Date().toISOString(),updatedAt:safeString(e.updatedAt,40)||new Date().toISOString()};
+      });
+      var fus=Array.isArray(src.followups)?src.followups:[]; if(fus.length>20000) throw new Error("too-many-followups");
+      var seenFu={};
+      c.followups=fus.map(function(f){
+        if(!f||typeof f!=="object") throw new Error("bad-followup");
+        var fid=safeId(f.id)?f.id:uid(); if(seenFu[fid]) fid=uid(); seenFu[fid]=1;
+        var created=migrateDateStr(f.date)||todayStr(), due=migrateDateStr(f.dueDate||"");
+        return {id:fid,title:safeString(f.title,3000),priority:f.priority==="urgent"?"urgent":"normal",description:safeString(f.description,20000),done:!!f.done,date:created,dueDate:due,createdAt:safeString(f.createdAt,40)||new Date().toISOString(),updatedAt:safeString(f.updatedAt,40)||new Date().toISOString()};
+      });
+      var fins=Array.isArray(src.finance)?src.finance:[]; if(fins.length>20000) throw new Error("too-many-finance");
+      var seenFin={};
+      c.finance=fins.map(function(x){
+        if(!x||typeof x!=="object") return null;
+        var xid=safeId(x.id)?x.id:uid(); if(seenFin[xid]) xid=uid(); seenFin[xid]=1;
+        var kind=x.kind==="income"?"income":"expense";
+        var cat=safeEnum(x.category,FIN_CATS,finFallbackCat(kind));
+        if(FIN_CATS[cat].kind!==kind) cat=finFallbackCat(kind);
+        var amt=Number(toLatinDigits(String(x.amount)).replace(/[,،٬\s]/g,""));
+        if(!isFinite(amt)||amt<=0) return null;
+        amt=Math.min(Math.round(amt),1e15);
+        return { id:xid, kind:kind, category:cat, amount:amt,
+          date:migrateDateStr(x.date)||todayStr(),
+          payer:safeEnum(x.payer,FIN_PAYERS,finDefaultPayer(kind)),
+          account:safeString(x.account,2000), refNo:safeString(x.refNo,500),
+          description:safeString(x.description,20000),
+          createdAt:safeString(x.createdAt,40)||new Date().toISOString(),
+          updatedAt:safeString(x.updatedAt,40)||new Date().toISOString() };
+      }).filter(Boolean);
+      return c;
+    });
+    var profile=null;
+    if(parsed.profile&&typeof parsed.profile==="object") profile={firstName:safeString(parsed.profile.firstName,500),lastName:safeString(parsed.profile.lastName,500),displayTitle:safeString(parsed.profile.displayTitle,1000),subtitle:safeString(parsed.profile.subtitle,1000),role:safeString(parsed.profile.role,1000)};
+    var attachments=[];
+    if(Array.isArray(parsed.attachments)){
+      if(parsed.attachments.length>50000) throw new Error("too-many-attachments");
+      var caseIds={}; cases.forEach(function(c){caseIds[c.id]=1;});
+      parsed.attachments.forEach(function(a){
+        if(!a||typeof a!=="object"||!safeId(a.id)||!safeId(a.caseId)||!caseIds[a.caseId]) throw new Error("bad-attachment");
+        if(typeof a.dataURL!=="string" || a.dataURL.indexOf("data:")!==0) throw new Error("bad-attachment-data");
+        attachments.push({id:a.id,caseId:a.caseId,title:safeString(a.title,3000),fileName:safeString(a.fileName,1000),mimeType:safeString(a.mimeType,300),size:Number(a.size)||0,date:migrateDateStr(a.date)||todayStr(),dataURL:a.dataURL});
+      });
+    }
+    return {version:Number(parsed.version)||1,profile:profile,cases:cases,attachments:attachments,appearance:parsed.appearance||null};
+  }
+  function loadState(cb){
+    try{
+      var raw=storageOK?window.localStorage.getItem(STORE_KEY):null;
+      var parsed=raw?JSON.parse(raw):{cases:[]};
+      var clean=normalizeImportedData(parsed);
+      state.cases=clean.cases; state.profile=clean.profile;
+    }catch(e){
+      state.cases=[]; state.profile=null;
+      state.loadError=true;
+      try{ state.rawRecovery=storageOK?window.localStorage.getItem(STORE_KEY):null; }catch(_e){}
+    }
+    state.loading=false; cb();
+  }
+  function migrateCase(c){ return normalizeImportedData({cases:[c]}).cases[0]; }
+  function saveState(){
+    if(!storageOK || state.loadError) return;
+    try{ window.localStorage.setItem(STORE_KEY, JSON.stringify({version:DATA_VERSION,profile:state.profile,cases:state.cases})); }
+    catch(e){ storageOK=false; render(); }
+  }
+  var toastTimer=null;
+  var searchTimer=null;
+  var lastModalSig=null;
+  function showToast(msg){
+    var old=document.getElementById("liveToast"); if(old&&old.parentNode) old.parentNode.removeChild(old);
+    var t=document.createElement("div"); t.className="toast"; t.id="liveToast"; t.setAttribute("role","status"); t.setAttribute("aria-live","polite"); t.textContent=msg; document.body.appendChild(t);
+    if(toastTimer) clearTimeout(toastTimer); toastTimer=setTimeout(function(){var el=document.getElementById("liveToast");if(el&&el.parentNode) el.parentNode.removeChild(el);},4000);
+  }
+  function exportBackup(){
+    showToast("در حال آماده‌سازی پشتیبان کامل…");
+    getAllAttachments().then(function(list){
+      return Promise.all(list.map(function(a){ return blobToDataURL(a.data).then(function(dataURL){return {id:a.id,caseId:a.caseId,title:a.title,fileName:a.fileName,mimeType:a.mimeType,size:a.size,date:a.date,dataURL:dataURL};}); }));
+    }).then(function(atts){
+      var payload=JSON.stringify({version:DATA_VERSION,profile:state.profile,cases:state.cases,appearance:state.appearance,attachments:atts,exportedAt:todayStr()},null,2);
+      triggerDownload(new Blob([payload],{type:"application/json"}),"cases-backup-full-"+todayStr().replace(/\//g,"-")+".json");
+      markBackupDone();
+      showToast("پشتیبان کامل شامل پرونده‌ها و پیوست‌ها ساخته شد.");
+    }).catch(function(){ showToast("ساخت پشتیبان کامل ممکن نشد."); });
+  }
+  function triggerDownload(blob, filename){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url; a.download=filename;
+    a.rel="noopener";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); },1500);
+  }
+  function downloadAppFile(){
+    try{
+      // از نسخهٔ تمیزِ ثبت‌شده در لحظهٔ بارگذاری استفاده می‌شود تا محتوای رندرشدهٔ
+      // پرونده‌ها (اسامی، شماره‌ها و…) داخل فایل قابل اشتراک قرار نگیرد.
+      var html=(PRISTINE_HTML && PRISTINE_HTML.length>1000)
+        ? PRISTINE_HTML
+        : "<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+      triggerDownload(new Blob([html],{type:"text/html;charset=utf-8"}),"daftar-parvandeha.html");
+    }catch(e){ showToast("ذخیره فایل برنامه ممکن نشد."); }
+  }
+
+  /* ---------------- data ops ---------------- */
+  function getCase(id){
+    for(var i=0;i<state.cases.length;i++) if(state.cases[i].id===id) return state.cases[i];
+    return null;
+  }
+  function upsertCase(data,id){
+    var nowIso=new Date().toISOString();
+    if(id){
+      var c=getCase(id);
+      if(c){ Object.keys(data).forEach(function(k){ c[k]=data[k]; }); c.updatedAt=nowIso; }
+    } else {
+      data.id=uid(); data.events=[]; data.followups=[]; data.finance=[]; data.createdAt=nowIso; data.updatedAt=nowIso; state.cases.unshift(data);
+    }
+    saveState();
+  }
+  function deleteCase(id){
+    state.cases=state.cases.filter(function(c){return c.id!==id;});
+    if(state.selectedCaseId===id) state.selectedCaseId=null;
+    delete state.attachmentsByCase[id];
+    if(attachmentsOK) deleteAttachmentsForCase(id);
+    saveState();
+  }
+  function loadAttachmentsFor(caseId){
+    if(!attachmentsOK) return;
+    var cur=state.attachmentsByCase[caseId];
+    if(cur==="loading"||Array.isArray(cur)) return;
+    state.attachmentsByCase[caseId]="loading";
+    getAttachmentsForCase(caseId).then(function(list){
+      list.sort(function(a,b){ return String(b.date).localeCompare(String(a.date)); });
+      state.attachmentsByCase[caseId]=list;
+      render();
+    }).catch(function(){
+      attachmentsOK=false;
+      state.attachmentsByCase[caseId]=[];
+      render();
+    });
+  }
+  function upsertEvent(caseId,data,eventId){
+    var c=getCase(caseId); if(!c) return;
+    if(eventId){
+      c.events.forEach(function(e){ if(e.id===eventId){ e.type=data.type; e.date=data.date; e.title=data.title; e.description=data.description; e.updatedAt=new Date().toISOString(); } });
+    } else {
+      c.events.push({id:uid(),type:data.type,date:data.date,title:data.title,description:data.description,done:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+    }
+    saveState();
+  }
+  function deleteEvent(caseId,eventId){
+    var c=getCase(caseId); if(!c) return;
+    c.events=c.events.filter(function(e){return e.id!==eventId;});
+    saveState();
+  }
+  function toggleEventDone(caseId,eventId){
+    var c=getCase(caseId); if(!c) return;
+    c.events.forEach(function(e){ if(e.id===eventId) e.done=!e.done; });
+    saveState();
+  }
+
+  function upsertFollowup(caseId,data,followupId){
+    var c=getCase(caseId); if(!c) return;
+    if(followupId){
+      c.followups.forEach(function(f){ if(f.id===followupId){ f.title=data.title; f.priority=data.priority; f.description=data.description; f.dueDate=data.dueDate||""; f.updatedAt=new Date().toISOString(); } });
+    } else {
+      c.followups.unshift({id:uid(),title:data.title,priority:data.priority,description:data.description,done:false,date:todayStr(),dueDate:data.dueDate||"",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+    }
+    saveState();
+  }
+  function deleteFollowup(caseId,followupId){
+    var c=getCase(caseId); if(!c) return;
+    c.followups=c.followups.filter(function(f){return f.id!==followupId;});
+    saveState();
+  }
+  function toggleFollowupDone(caseId,followupId){
+    var c=getCase(caseId); if(!c) return;
+    c.followups.forEach(function(f){ if(f.id===followupId) f.done=!f.done; });
+    saveState();
+  }
+
+  function upsertFin(caseId,data,finId){
+    var c=getCase(caseId); if(!c) return;
+    if(!Array.isArray(c.finance)) c.finance=[];
+    var nowIso=new Date().toISOString();
+    if(finId){
+      c.finance.forEach(function(x){ if(x.id===finId){
+        x.kind=data.kind; x.category=data.category; x.amount=data.amount; x.date=data.date;
+        x.payer=data.payer; x.account=data.account; x.refNo=data.refNo; x.description=data.description;
+        x.updatedAt=nowIso;
+      }});
+    } else {
+      c.finance.unshift({ id:uid(), kind:data.kind, category:data.category, amount:data.amount, date:data.date,
+        payer:data.payer, account:data.account, refNo:data.refNo, description:data.description,
+        createdAt:nowIso, updatedAt:nowIso });
+    }
+    c.updatedAt=nowIso;
+    saveState();
+  }
+  function deleteFin(caseId,finId){
+    var c=getCase(caseId); if(!c||!Array.isArray(c.finance)) return;
+    c.finance=c.finance.filter(function(x){return x.id!==finId;});
+    saveState();
+  }
+  // جمع‌های مالی یک پرونده — هر بار ثبت/ویرایش، از روی خود تراکنش‌ها دوباره محاسبه می‌شود
+  function caseFinTotals(c){
+    var t={income:0,expense:0,lawyerPaid:0,reimbursed:0};
+    (c.finance||[]).forEach(function(x){
+      if(x.kind==="income"){ t.income+=x.amount; if(x.category==="reimburse") t.reimbursed+=x.amount; }
+      else { t.expense+=x.amount; if(x.payer==="lawyer") t.lawyerPaid+=x.amount; }
+    });
+    t.net=t.income-t.expense;
+    t.clientDue=t.lawyerPaid-t.reimbursed;
+    return t;
+  }
+  function pendingFollowups(){
+    var list=[];
+    state.cases.forEach(function(c){
+      if(c.status==="closed") return;
+      c.followups.forEach(function(f){
+        if(!f.done) list.push({caseId:c.id, caseObj:c, item:f});
+      });
+    });
+    list.sort(function(a,b){
+      if(a.item.priority!==b.item.priority) return a.item.priority==="urgent"?-1:1;
+      return String(a.item.dueDate||"9999/99/99").localeCompare(String(b.item.dueDate||"9999/99/99")) || String(a.item.date).localeCompare(String(b.item.date));
+    });
+    return list;
+  }
+  function pendingFollowupCounts(){
+    var p=pendingFollowups();
+    var urgent=p.filter(function(x){return x.item.priority==="urgent";}).length;
+    return { total:p.length, urgent:urgent, normal:p.length-urgent };
+  }
+
+  function trackedItems(){
+    var up=[], over=[];
+    state.cases.forEach(function(c){
+      if(c.status==="closed") return;
+      c.events.forEach(function(e){
+        if(!isTracked(e.type) || e.done) return;
+        var d=daysDiff(e.date);
+        if(d===null) return;
+        var row={caseId:c.id, caseObj:c, event:e, diff:d};
+        if(d<0) over.push(row); else up.push(row);
+      });
+    });
+    up.sort(function(a,b){return a.diff-b.diff;});
+    over.sort(function(a,b){return b.diff-a.diff;});
+    return {upcoming:up, overdue:over};
+  }
+  function nextTrackedDiff(c){
+    var best=null;
+    c.events.forEach(function(e){
+      if(!isTracked(e.type)||e.done) return;
+      var d=daysDiff(e.date);
+      if(d!==null && (best===null || d<best)) best=d;
+    });
+    return best;
+  }
+  function recentActivity(limit){
+    var list=[];
+    state.cases.forEach(function(c){
+      c.events.forEach(function(e){ list.push({caseObj:c, caseId:c.id, event:e}); });
+    });
+    list.sort(function(a,b){ return String(b.event.createdAt||b.event.date).localeCompare(String(a.event.createdAt||a.event.date)); });
+    return list.slice(0,limit||8);
+  }
+
+  /* ---------------- render ---------------- */
+  var root=document.getElementById("root");
+
+  function render(){
+    closeHelp();
+    if(state.loading){ root.innerHTML='<div class="loading">در حال بارگذاری…</div>'; return; }
+    var html;
+    if(!state.profile){
+      html=renderSetupScreen();
+    } else {
+      html=renderHeader()+'<div class="app">'+renderStorageWarning()+'<main>'+
+        (state.view==="dashboard"?renderDashboard():state.view==="stats"?renderStatsTab():state.view==="followups"?renderFollowupsTab():state.view==="settings"?renderSettingsTab():renderCases())+'</main></div>';
+      if(state.modal) html+=renderModal();
+    }
+    if(!state.profile && state.appearanceOpen) html+=renderAppearancePanel();
+    root.innerHTML=html;
+    bindEvents();
+    afterRenderFocus();
+  }
+
+  function modalSignature(){
+    var m=state.modal;
+    if(!m) return "";
+    return [m.type,m.id||"",m.caseId||"",m.eventId||"",m.followupId||"",m.finId||""].join("|");
+  }
+  function afterRenderFocus(){
+    var modal=root.querySelector(".modal");
+    if(!modal){ lastModalSig=""; return; }
+    bindModalFocusTrap(modal);
+    if(state.modal && state.modal._focus){
+      var named=modal.querySelector('[name="'+state.modal._focus+'"]');
+      if(named) try{ named.focus(); }catch(e){}
+      state.modal._focus=null;
+      lastModalSig=modalSignature();
+      return;
+    }
+    if(state.modal && state.modal.errors){
+      var errEl=modal.querySelector(".err");
+      var field=errEl && errEl.parentNode && errEl.parentNode.querySelector("input,select,textarea");
+      if(field){ try{ field.focus(); }catch(e){} }
+      lastModalSig=modalSignature();
+      return;
+    }
+    var sig=modalSignature();
+    if(sig && sig!==lastModalSig){
+      var first=modal.querySelector("input,select,textarea,button");
+      if(first) try{ first.focus(); }catch(e){}
+    }
+    lastModalSig=sig;
+  }
+  function bindModalFocusTrap(modal){
+    var nodes=modal.querySelectorAll("button,input,select,textarea,a[href]");
+    if(!nodes.length) return;
+    var first=nodes[0], last=nodes[nodes.length-1];
+    modal.addEventListener("keydown",function(ev){
+      if(ev.key!=="Tab") return;
+      if(ev.shiftKey && document.activeElement===first){ ev.preventDefault(); last.focus(); }
+      else if(!ev.shiftKey && document.activeElement===last){ ev.preventDefault(); first.focus(); }
+    });
+  }
+
+  function profileFields(v){
+    v=v||{};
+    return '<div class="field-row">'+
+        '<div class="field"><label>نام</label><input type="text" name="firstName" id="pfFirst" value="'+escapeHtml(v.firstName||"")+'"></div>'+
+        '<div class="field"><label>نام خانوادگی</label><input type="text" name="lastName" id="pfLast" value="'+escapeHtml(v.lastName||"")+'"></div>'+
+      '</div>'+
+      '<div class="field"><label>عنوان نمایشی در سربرگ اصلی'+helpBtn("profile-title")+'</label>'+
+        '<input type="text" name="displayTitle" id="pfTitle" value="'+escapeHtml(v.displayTitle||"")+'" placeholder="مثلاً: دفتر وکالت ..."></div>'+
+      '<div class="field"><label>زیرعنوان (اختیاری)</label>'+
+        '<input type="text" name="subtitle" value="'+escapeHtml(v.subtitle||"")+'" placeholder="پایش پرونده‌ها، مواعد و اوقات رسیدگی"></div>'+
+      '<div class="field"><label>سمت / عنوان حرفه‌ای (اختیاری)'+helpBtn("profile-role")+'</label>'+
+        '<input type="text" name="role" value="'+escapeHtml(v.role||"")+'" placeholder="مثلاً: وکیل پایه‌یک دادگستری"></div>';
+  }
+
+  function renderSetupScreen(){
+    var err=(state.modal&&state.modal.errors)||{};
+    var v=(state.modal&&state.modal.values)||{};
+    return '<div class="setup-wrap"><div class="setup-card">'+
+      '<div class="setup-tools no-print"><button type="button" class="btn btn-ghost btn-sm" data-act="toggle-appearance">'+ico("palette")+' ظاهر</button></div>'+
+      '<div class="setup-logo">دفتر پرونده‌ها</div>'+
+      '<div class="setup-lead">پیش از شروع، مشخصات خود را وارد کنید. این اطلاعات فقط روی همین دستگاه ذخیره می‌شود و بعداً از دکمهٔ «مشخصات» قابل تغییر است.</div>'+
+      renderStorageWarning()+
+      '<form data-form="profile" style="margin-top:18px;">'+
+        profileFields(v)+
+        (err.name?'<div class="err" style="margin-bottom:10px;">'+err.name+'</div>':'')+
+        '<button type="submit" class="btn btn-primary" style="width:100%;margin-top:6px;">شروع کار</button>'+
+      '</form>'+
+    '</div></div>';
+  }
+
+  function renderStorageWarning(){
+    if(state.loadError){ return '<div class="storage-warn"><div class="sw-title">خطا در خواندن داده‌های ذخیره‌شده</div><div class="sw-body">برای جلوگیری از بازنویسی ناخواسته، ذخیره‌سازی متوقف شده و دادهٔ قبلی بازنویسی نشده است.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><button type="button" class="btn btn-sm" data-act="export-raw">دانلود دادهٔ خام برای بازیابی</button><button type="button" class="btn btn-sm" data-act="import-trigger">وارد کردن پشتیبان سالم</button><input type="file" id="importFile" accept="application/json,.json" style="display:none"></div></div>'; }
+    if(storageOK) return "";
+    return '<div class="storage-warn no-print">'+
+      '<div class="sw-title">⚠ در این حالت اطلاعات ذخیرهٔ دائم نمی‌شود</div>'+
+      '<div class="sw-body">این صفحه در محیطی باز شده که اجازهٔ ذخیره‌سازی در مرورگر را نمی‌دهد. '+
+      'هر چه وارد کنید فقط تا زمانی که همین صفحه باز است باقی می‌ماند و با بستن یا بازخوانی از بین می‌رود.<br>'+
+      'برای استفادهٔ واقعی، فایل را <b>دانلود</b> کنید و آن را مستقیم با مرورگر خودتان (Safari یا Chrome) باز کنید؛ '+
+      'در آن حالت همه‌چیز روی همان دستگاه ذخیره می‌ماند. اگر همین حالا اطلاعاتی وارد کرده‌اید، پیش از بستن صفحه '+
+      '«خروجی پشتیبان» بگیرید تا از دست نرود.</div>'+
+    '</div>';
+  }
+
+  function renderHeader(){
+    var p=state.profile||{};
+    var title=p.displayTitle || ([p.firstName,p.lastName].filter(Boolean).join(" ")) || "دفتر پرونده‌ها";
+    var sub=p.subtitle || "پایش پرونده‌ها، مواعد و اوقات رسیدگی";
+    var fc=pendingFollowupCounts();
+    var fuLabel="پیگیری‌ها"+(fc.total?" ("+toFaDigits(fc.total)+")":"");
+    return '<header class="top"><div class="inner">'+
+      '<div class="brand"><span class="title">'+escapeHtml(title)+'</span>'+
+      '<span class="subtitle">'+escapeHtml(sub)+'</span></div>'+
+      '<div class="head-tools">'+
+        '<div class="tabs">'+
+          '<button class="tab '+(state.view==="dashboard"?"active":"")+'" data-act="view" data-view="dashboard">'+ico("dash")+'داشبورد</button>'+
+          '<button class="tab '+(state.view==="stats"?"active":"")+'" data-act="view" data-view="stats">'+ico("chart")+'آمار</button>'+
+          '<button class="tab '+(state.view==="cases"?"active":"")+'" data-act="view" data-view="cases">'+ico("folder")+'پرونده‌ها</button>'+
+          '<button class="tab '+(state.view==="followups"?"active":"")+(fc.urgent&&state.view!=="followups"?" alarm":"")+'" data-act="view" data-view="followups">'+ico("list")+fuLabel+'</button>'+
+          '<button class="tab '+(state.view==="settings"?"active":"")+'" data-act="view" data-view="settings">'+ico("palette")+'ظاهر</button>'+
+        '</div>'+
+        '<button class="btn btn-ghost btn-sm" data-act="edit-profile">'+ico("user")+'مشخصات</button>'+
+        '<button class="btn btn-ghost btn-sm" data-act="export">'+ico("download")+'پشتیبان کامل</button>'+
+        '<button class="btn btn-ghost btn-sm" data-act="import-trigger">'+ico("upload")+'وارد کردن پشتیبان</button>'+
+        '<input type="file" id="importFile" accept="application/json,.json" style="display:none">'+
+        '<button class="btn btn-primary" data-act="new-case">'+ico("plus")+'پرونده جدید</button>'+
+      '</div>'+
+    '</div></header>'+
+    renderBottomNav(fc);
+  }
+
+  function renderBottomNav(fc){
+    function bn(view, icon, label, extra){
+      var cls="bn"+(state.view===view?" active":"")+(extra&&extra.alarm?" alarm":"");
+      return '<button class="'+cls+'" data-act="view" data-view="'+view+'">'+ico(icon)+
+        '<span>'+label+'</span>'+
+        (extra&&extra.count?'<i class="bn-dot">'+toFaDigits(extra.count)+'</i>':'')+
+      '</button>';
+    }
+    return '<nav class="bottomnav no-print" aria-label="ناوبری اصلی">'+
+      bn("dashboard","dash","داشبورد")+
+      bn("stats","chart","آمار")+
+      bn("cases","folder","پرونده‌ها")+
+      bn("followups","list","پیگیری‌ها",{alarm:fc.urgent&&state.view!=="followups", count:fc.total})+
+      bn("settings","palette","ظاهر")+
+    '</nav>';
+  }
+
+  function renderSettingsTab(){
+    var a=state.appearance||defaultAppearance();
+    var html='<div class="settings-page no-print">';
+    html+='<div class="section-title">'+ico("download")+' دانلود برنامه</div>';
+    html+='<div class="settings-card">'+
+      '<div class="settings-lead">یک نسخهٔ مستقل از همین برنامه را روی دستگاه ذخیره کنید. داده‌های پرونده داخل فایل HTML قرار نمی‌گیرند؛ برای انتقال اطلاعات از «پشتیبان کامل» استفاده کنید.</div>'+
+      '<button type="button" class="btn btn-primary" data-act="download-app">'+ico("download")+'ذخیره فایل برنامه</button>'+
+    '</div>';
+    html+='<div class="section-title">محرمانگی اطلاعات</div>';
+    html+='<div class="settings-card"><div class="settings-lead">اطلاعات این دفتر فقط در حافظهٔ همین مرورگر نگهداری می‌شود و به سرور ارسال نمی‌شود. با این حال، هر شخصی که به حساب کاربری سیستم‌عامل و پروفایل مرورگر شما دسترسی داشته باشد ممکن است به داده‌ها دسترسی پیدا کند. برای پرونده‌های محرمانه از قفل سیستم‌عامل/رمزگذاری دیسک و پشتیبان در محل امن استفاده کنید.</div></div>';
+    html+='<div class="section-title">'+ico("type")+' اندازه نوشته</div>';
+    html+='<div class="settings-card">'+
+      '<div class="appear-label"><span>کوچک ← بزرگ</span><span class="appear-pct" id="fontScaleVal">'+toFaDigits(Math.round(a.fontScale*100))+'٪</span></div>'+
+      '<div class="appear-ctrl" style="width:100%;">'+
+        '<button type="button" class="stepper" data-act="font-down" aria-label="کوچک‌کردن نوشته">'+ico("minus")+'</button>'+
+        '<input type="range" min="'+FONT_MIN+'" max="'+FONT_MAX+'" step="0.02" value="'+a.fontScale+'" data-act="font-range" aria-label="اندازه نوشته" style="flex:1;width:auto;">'+
+        '<button type="button" class="stepper" data-act="font-up" aria-label="بزرگ‌کردن نوشته">'+ico("plus")+'</button>'+
+      '</div>'+
+      '<div class="scale-row" style="margin-top:10px;">';
+    FONT_STEPS.forEach(function(s){
+      html+='<button type="button" class="scale-chip'+(stepActive(FONT_STEPS,a.fontScale)===s.v?" active":"")+'" data-act="set-font-scale" data-scale="'+s.v+'">'+s.label+'</button>';
+    });
+    html+='</div></div>';
+    html+='<div class="section-title">'+ico("icon")+' اندازه آیکون</div>';
+    html+='<div class="settings-card">'+
+      '<div class="appear-label"><span>کوچک ← بزرگ</span><span class="appear-pct" id="iconScaleVal">'+toFaDigits(Math.round(a.iconScale*100))+'٪</span></div>'+
+      '<div class="appear-ctrl" style="width:100%;">'+
+        '<button type="button" class="stepper" data-act="icon-down" aria-label="کوچک‌کردن آیکون">'+ico("minus")+'</button>'+
+        '<input type="range" min="'+ICON_MIN+'" max="'+ICON_MAX+'" step="0.02" value="'+a.iconScale+'" data-act="icon-range" aria-label="اندازه آیکون" style="flex:1;width:auto;">'+
+        '<button type="button" class="stepper" data-act="icon-up" aria-label="بزرگ‌کردن آیکون">'+ico("plus")+'</button>'+
+      '</div>'+
+      '<div class="scale-row" style="margin-top:10px;">';
+    ICON_STEPS.forEach(function(s){
+      html+='<button type="button" class="scale-chip'+(stepActive(ICON_STEPS,a.iconScale)===s.v?" active":"")+'" data-act="set-icon-scale" data-scale="'+s.v+'">'+s.label+'</button>';
+    });
+    html+='</div></div>';
+    html+='<div class="section-title">'+ico("palette")+' پالت رنگی</div>';
+    html+='<div class="pal-grid">';
+    PALETTES.forEach(function(pal){
+      html+='<button type="button" class="pal-card'+(a.palette===pal.id?" active":"")+'" data-act="set-palette" data-palette="'+pal.id+'">';
+      html+='<div class="pal-dots">';
+      pal.dots.forEach(function(c){ html+='<span class="pal-dot" style="background:'+c+'"></span>'; });
+      html+='</div><div class="pal-name">'+escapeHtml(pal.label)+'</div></button>';
+    });
+    html+='</div></div>';
+    return html;
+  }
+
+  function renderAppearBar(inSetup){
+    var a=state.appearance||defaultAppearance();
+    var html='<div class="appear-bar no-print">';
+    html+='<div class="appear-ctrl" title="اندازه نوشته">'+
+      '<span class="appear-ctrl-lbl">نوشته</span>'+
+      '<button type="button" class="stepper" data-act="font-down" aria-label="کوچک‌کردن نوشته">'+ico("minus")+'</button>'+
+      '<input type="range" min="'+FONT_MIN+'" max="'+FONT_MAX+'" step="0.02" value="'+a.fontScale+'" data-act="font-range" aria-label="اندازه نوشته">'+
+      '<button type="button" class="stepper" data-act="font-up" aria-label="بزرگ‌کردن نوشته">'+ico("plus")+'</button>'+
+      '<span class="appear-pct" id="fontScaleVal">'+toFaDigits(Math.round(a.fontScale*100))+'٪</span>'+
+    '</div>';
+    html+='<div class="appear-ctrl" title="اندازه آیکون">'+
+      '<span class="appear-ctrl-lbl">آیکون</span>'+
+      '<button type="button" class="stepper" data-act="icon-down" aria-label="کوچک‌کردن آیکون">'+ico("minus")+'</button>'+
+      '<input type="range" min="'+ICON_MIN+'" max="'+ICON_MAX+'" step="0.02" value="'+a.iconScale+'" data-act="icon-range" aria-label="اندازه آیکون">'+
+      '<button type="button" class="stepper" data-act="icon-up" aria-label="بزرگ‌کردن آیکون">'+ico("plus")+'</button>'+
+      '<span class="appear-pct" id="iconScaleVal">'+toFaDigits(Math.round(a.iconScale*100))+'٪</span>'+
+    '</div>';
+    html+='<div class="appear-pals">';
+    PALETTES.forEach(function(pal){
+      html+='<button type="button" class="pal-swatch'+(a.palette===pal.id?" active":"")+'" data-act="set-palette" data-palette="'+pal.id+'" title="'+escapeHtml(pal.label)+'" style="--sw1:'+pal.dots[0]+';--sw2:'+pal.dots[1]+'"></button>';
+    });
+    html+='</div></div>';
+    return html;
+  }
+
+  function renderAppearancePanel(){
+    var a=state.appearance||defaultAppearance();
+    var html='<div class="appear-scrim no-print" data-act="close-appearance"></div>';
+    html+='<div class="appear-panel no-print" role="dialog" aria-label="ظاهر دفتر">';
+    html+='<h3>'+ico("palette")+' ظاهر دفتر</h3>';
+    html+='<div class="appear-lead">اندازهٔ نوشته و آیکون را با لغزنده یا دکمه‌های −/+ عوض کنید. پالت رنگی کل رابط را عوض می‌کند و روی همین دستگاه ذخیره می‌ماند.</div>';
+    html+='<div class="appear-label"><span>'+ico("type")+' اندازه نوشته</span><span id="fontScaleVal2">'+toFaDigits(Math.round(a.fontScale*100))+'٪</span></div>';
+    html+='<input type="range" class="scale-slide" min="'+FONT_MIN+'" max="'+FONT_MAX+'" step="0.02" value="'+a.fontScale+'" data-act="font-range-panel" aria-label="اندازه نوشته">';
+    html+='<div class="scale-row">';
+    FONT_STEPS.forEach(function(s){
+      html+='<button type="button" class="scale-chip'+(stepActive(FONT_STEPS,a.fontScale)===s.v?" active":"")+'" data-act="set-font-scale" data-scale="'+s.v+'">'+s.label+'</button>';
+    });
+    html+='</div>';
+    html+='<div class="appear-label"><span>'+ico("icon")+' اندازه آیکون</span><span id="iconScaleVal2">'+toFaDigits(Math.round(a.iconScale*100))+'٪</span></div>';
+    html+='<input type="range" class="scale-slide" min="'+ICON_MIN+'" max="'+ICON_MAX+'" step="0.02" value="'+a.iconScale+'" data-act="icon-range-panel" aria-label="اندازه آیکون">';
+    html+='<div class="scale-row">';
+    ICON_STEPS.forEach(function(s){
+      html+='<button type="button" class="scale-chip'+(stepActive(ICON_STEPS,a.iconScale)===s.v?" active":"")+'" data-act="set-icon-scale" data-scale="'+s.v+'">'+s.label+'</button>';
+    });
+    html+='</div>';
+    html+='<div class="appear-label">پالت رنگی</div><div class="pal-grid">';
+    PALETTES.forEach(function(pal){
+      html+='<button type="button" class="pal-card'+(a.palette===pal.id?" active":"")+'" data-act="set-palette" data-palette="'+pal.id+'">';
+      html+='<div class="pal-dots">';
+      pal.dots.forEach(function(c){ html+='<span class="pal-dot" style="background:'+c+'"></span>'; });
+      html+='</div><div class="pal-name">'+escapeHtml(pal.label)+'</div></button>';
+    });
+    html+='</div></div>';
+    return html;
+  }
+
+  function trackedRow(u, overdue){
+    var d=parseDateStr(u.event.date);
+    if(!d) return "";
+    var meta=EVENT_TYPES[u.event.type]||EVENT_TYPES.other;
+    var ct=court(u.caseObj.courtType);
+    return '<button class="hearing-item '+(overdue?"overdue":"")+'" data-act="open-case" data-id="'+u.caseId+'">'+
+      '<div class="date-block" style="border-color:'+ct.color+'33"><div class="d">'+toFaDigits(d.jd)+'</div>'+
+      '<div class="m">'+MONTH_NAMES[d.jm-1]+'</div></div>'+
+      '<div class="hearing-mid">'+
+        '<div class="case-num"><span>'+escapeHtml(u.caseObj.caseNumber||"بدون شماره")+'</span>'+
+        '<span class="badge '+ct.badge+'">'+ct.label+'</span>'+
+        '<span class="badge '+meta.badge+'">'+meta.label+'</span></div>'+
+        '<div class="hearing-title">'+escapeHtml(u.event.title||meta.label)+'</div>'+
+      '</div>'+
+      '<div class="hearing-right"><div class="urgency '+urgencyClass(u.diff)+'">'+urgencyLabel(u.diff)+'</div></div>'+
+    '</button>';
+  }
+
+  function renderStatsTab(){
+    var period=state.statsPeriod||"month", st=collectStats(period);
+    var metrics=[
+      {k:"cases",label:"پرونده‌های جدید",cls:"",acc:"acc-brass",note:"بر اساس تاریخ ثبت/ورود پرونده"},
+      {k:"followups",label:"پیگیری‌ها",cls:"followups",acc:"acc-slate",note:"پیگیری‌های ایجادشده"},
+      {k:"motions",label:"لوایح ارسالی",cls:"motions",acc:"acc-violet",note:"رویدادهای «لایحه / دادخواست»"},
+      {k:"wins",label:"برد",cls:"wins",acc:"acc-sage",note:"نتیجه پرونده = برد"},
+      {k:"losses",label:"باخت",cls:"losses",acc:"acc-maroon",note:"نتیجه پرونده = باخت"}
+    ];
+    var max=1; metrics.forEach(function(m){if(st[m.k]>max) max=st[m.k];});
+    var html='<div class="stats-head"><div><div class="stats-title">'+ico("chart")+' آمار عملکرد</div><div class="stats-sub">نمای آماری '+statsPeriodLabel(period)+'</div></div>'+
+      '<div class="period-switch" role="group" aria-label="بازه آمار">'+
+        '<button class="period-btn'+(period==="week"?' active':'')+'" data-act="stats-period" data-period="week">هفتگی</button>'+
+        '<button class="period-btn'+(period==="month"?' active':'')+'" data-act="stats-period" data-period="month">ماهانه</button>'+
+        '<button class="period-btn'+(period==="year"?' active':'')+'" data-act="stats-period" data-period="year">سالانه</button>'+
+      '</div></div>';
+    html+='<div class="stat-row">';
+    metrics.forEach(function(m){
+      html+='<div class="stat-card metric-card '+m.acc+'"><div class="num">'+toFaDigits(st[m.k])+'</div><div class="lbl">'+m.label+'</div><div class="metric-note">'+m.note+'</div></div>';
+    });
+    html+='</div>';
+    html+='<div class="stats-panels">';
+    html+='<div class="chart-card"><h3>مقایسه شاخص‌ها</h3><div class="chart-desc">تعداد هر شاخص در '+statsPeriodLabel(period)+'</div><div class="metric-bars">';
+    metrics.forEach(function(m){
+      var pct=Math.round((st[m.k]/max)*100);
+      html+='<div class="metric-bar-row"><div class="metric-bar-label">'+m.label+'</div><div class="metric-track"><div class="metric-fill '+m.cls+'" style="width:'+pct+'%"></div></div><div class="metric-bar-num">'+toFaDigits(st[m.k])+'</div></div>';
+    });
+    html+='</div></div>';
+    var bmax=1; st.buckets.forEach(function(b){if(b.value>bmax)bmax=b.value;});
+    html+='<div class="chart-card"><h3>روند کل فعالیت‌ها</h3><div class="chart-desc">مجموع پرونده جدید، پیگیری، لایحه و نتیجه‌های ثبت‌شده در طول بازه</div><div class="trend-chart">';
+    st.buckets.forEach(function(b){
+      var h=b.value?Math.max(2,Math.round((b.value/bmax)*128)):0;
+      html+='<div class="trend-col" title="'+escapeHtml(b.label)+': '+b.value+'"><div class="trend-value">'+(b.value?toFaDigits(b.value):'')+'</div><div class="trend-bar-wrap"><div class="trend-bar" style="height:'+h+'px"></div></div><div class="trend-label">'+escapeHtml(b.label)+'</div></div>';
+    });
+    html+='</div>';
+    if(st.cases+st.followups+st.motions+st.wins+st.losses===0) html+='<div class="stats-empty-note">در این بازه هنوز داده‌ای ثبت نشده است.</div>';
+    html+='</div></div>';
+
+    var fin=collectFinStats(period);
+    html+='<div class="section-title" style="margin-top:28px;">'+ico("coins")+' آمار مالی <span class="count">همهٔ مبالغ به تومان</span></div>';
+    html+='<div class="stat-row">'+
+      '<div class="stat-card metric-card acc-sage"><div class="num money pos">'+formatMoney(fin.income)+'</div><div class="lbl">دریافتی‌ها (درآمد)</div><div class="metric-note">جمع تراکنش‌های «دریافتی» ثبت‌شده در بازه</div></div>'+
+      '<div class="stat-card metric-card acc-maroon"><div class="num money neg">'+formatMoney(fin.expense)+'</div><div class="lbl">هزینه‌های پرداختی</div><div class="metric-note">جمع تراکنش‌های «هزینه» ثبت‌شده در بازه</div></div>'+
+      '<div class="stat-card metric-card acc-amber"><div class="num money" style="color:var(--amber);">'+formatMoney(fin.lawyerPaid)+'</div><div class="lbl">پرداختیِ شخص وکیل</div><div class="metric-note">هزینه‌هایی که پرداخت‌کنندهٔ آن «وکیل» ثبت شده است</div></div>'+
+      '<div class="stat-card metric-card acc-teal'+(fin.net<0?" alarm":"")+'"><div class="num money'+(fin.net>0?" pos":(fin.net<0?" neg":""))+'">'+formatMoney(fin.net)+'</div><div class="lbl">تراز (دریافتی − هزینه)</div><div class="metric-note">ماندهٔ خالص همین بازه</div></div>'+
+    '</div>';
+    var fmax=1; fin.buckets.forEach(function(b){ if(b.inc>fmax)fmax=b.inc; if(b.exp>fmax)fmax=b.exp; });
+    html+='<div class="chart-card"><h3>روند مالی</h3><div class="chart-desc">مقایسهٔ دریافتی و هزینه در '+statsPeriodLabel(period)+' — برای دیدن مبلغ دقیق، نشانگر را روی ستون نگه دارید</div>';
+    html+='<div class="fin-legend"><span><i class="inc"></i>دریافتی</span><span><i class="exp"></i>هزینه</span></div>';
+    html+='<div class="trend-chart">';
+    fin.buckets.forEach(function(b){
+      var hi=b.inc?Math.max(2,Math.round((b.inc/fmax)*128)):0;
+      var he=b.exp?Math.max(2,Math.round((b.exp/fmax)*128)):0;
+      html+='<div class="trend-col" title="'+escapeHtml(b.label)+' — دریافتی: '+formatMoney(b.inc)+' | هزینه: '+formatMoney(b.exp)+'">'+
+        '<div class="trend-value"></div>'+
+        '<div class="trend-bar-wrap fin-pair">'+
+          '<div class="trend-bar inc" style="height:'+hi+'px"></div>'+
+          '<div class="trend-bar exp" style="height:'+he+'px"></div>'+
+        '</div>'+
+        '<div class="trend-label">'+escapeHtml(b.label)+'</div></div>';
+    });
+    html+='</div>';
+    if(!fin.count) html+='<div class="stats-empty-note">در این بازه تراکنش مالی ثبت نشده است. از داخل هر پرونده، بخش «امور مالی و پرداختی‌ها» را تکمیل کنید.</div>';
+    html+='</div>';
+    return html;
+  }
+
+  function renderDashboard(){
+    var t=trackedItems();
+    var activeCount=state.cases.filter(function(c){return c.status==="active";}).length;
+    var soonCount=t.upcoming.filter(function(u){return u.diff<=14;}).length;
+    var html="";
+
+    var bn=backupNudge();
+    if(bn){
+      html+='<div class="backup-note no-print">'+
+        '<div class="bk-t">'+ico("download")+'یادآور پشتیبان‌گیری</div>'+
+        '<div class="bk-b">'+(bn.days!=null
+          ? 'از آخرین «پشتیبان کامل» '+toFaDigits(bn.days)+' روز گذشته است.'
+          : 'هنوز از داده‌های این دفتر «پشتیبان کامل» نگرفته‌اید.')+
+          ' داده‌ها فقط در حافظهٔ همین مرورگر نگهداری می‌شود؛ یک پشتیبان تازه خیالتان را راحت می‌کند.</div>'+
+        '<div class="bk-a">'+
+          '<button class="btn btn-primary btn-sm" data-act="export">'+ico("download")+'پشتیبان کامل</button>'+
+          '<button class="btn btn-ghost btn-sm" data-act="snooze-backup">یادآوری بعداً</button>'+
+        '</div>'+
+      '</div>';
+    }
+
+    html+='<div class="stat-row">'+
+      '<div class="stat-card acc-brass"><div class="num">'+toFaDigits(state.cases.length)+'</div><div class="lbl">کل پرونده‌ها</div></div>'+
+      '<div class="stat-card acc-teal"><div class="num">'+toFaDigits(activeCount)+'</div><div class="lbl">در جریان</div></div>'+
+      '<div class="stat-card acc-violet"><div class="num">'+toFaDigits(soonCount)+'</div><div class="lbl">موعد/جلسه تا ۱۴ روز آینده</div></div>'+
+      '<div class="stat-card'+(t.overdue.length?" acc-maroon alarm":" acc-sage")+'"><div class="num">'+toFaDigits(t.overdue.length)+'</div><div class="lbl">سررسید گذشته و تعیین‌تکلیف‌نشده</div></div>'+
+    '</div>';
+
+    if(t.overdue.length){
+      html+='<div class="section-title alarm">⚠ سررسید گذشته — نیازمند تعیین تکلیف <span class="count">'+toFaDigits(t.overdue.length)+'</span>'+helpBtn("overdue-dash")+'</div>';
+      t.overdue.slice(0,6).forEach(function(u){ html+=trackedRow(u,true); });
+    }
+
+    html+='<div class="section-title">نزدیک‌ترین مواعد و اوقات رسیدگی <span class="count">'+toFaDigits(t.upcoming.length)+'</span></div>';
+    if(!t.upcoming.length){
+      html+='<div class="empty">موعد یا وقت رسیدگی آینده‌ای ثبت نشده است.</div>';
+    } else {
+      t.upcoming.slice(0,10).forEach(function(u){ html+=trackedRow(u,false); });
+    }
+
+    var recent=recentActivity(8);
+    html+='<div class="section-title" style="margin-top:28px;">آخرین اقدامات ثبت‌شده</div>';
+    if(!recent.length){
+      html+='<div class="empty">هنوز رویدادی ثبت نشده است.</div>';
+    } else {
+      html+='<div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:6px 14px;">';
+      recent.forEach(function(r){
+        var meta=EVENT_TYPES[r.event.type]||EVENT_TYPES.other;
+        html+='<div class="activity-row"><div class="adate">'+formatDateDisplay(r.event.date)+'</div>'+
+          '<div class="abody"><span class="acase">'+escapeHtml(r.caseObj.caseNumber||"—")+'</span> — '+
+          '<span class="badge '+meta.badge+'" style="margin-inline-end:6px;">'+meta.label+'</span>'+
+          escapeHtml(r.event.title||"")+'</div></div>';
+      });
+      html+='</div>';
+    }
+    return html;
+  }
+
+  function followupRow(row, fromAggregate){
+    var f=row.item, ct=court(row.caseObj.courtType), pm=PRIORITY_META[f.priority]||PRIORITY_META.normal;
+    var html='<div class="followup-row pri-'+f.priority+(f.done?" is-done":"")+'">'+
+      '<div class="fu-main">'+
+        '<div class="fu-top">'+
+          '<span class="badge '+pm.badge+'">'+pm.label+'</span>'+
+          (fromAggregate?'<span class="badge '+ct.badge+'">'+escapeHtml(row.caseObj.caseNumber||"بدون شماره")+'</span>':'')+
+          '<span class="fu-case">'+(f.dueDate?('سررسید: '+formatDateDisplay(f.dueDate)):'ثبت: '+formatDateDisplay(f.date))+'</span>'+
+        '</div>'+
+        '<div class="fu-title">'+escapeHtml(f.title)+'</div>'+
+        (f.description?'<div class="fu-desc">'+escapeHtml(f.description)+'</div>':'')+
+      '</div>'+
+      '<div class="fu-actions">'+
+        '<button class="btn btn-ghost btn-sm" data-act="toggle-followup-done" data-case="'+row.caseId+'" data-id="'+f.id+'">'+(f.done?"بازگرداندن":"انجام شد")+'</button>'+
+        (fromAggregate?'<button class="btn btn-ghost btn-sm" data-act="open-case" data-id="'+row.caseId+'">مشاهده در پرونده</button>':
+          '<button class="btn btn-ghost btn-sm" data-act="edit-followup" data-case="'+row.caseId+'" data-id="'+f.id+'">ویرایش</button>'+
+          '<button class="btn btn-ghost btn-sm" data-act="delete-followup" data-case="'+row.caseId+'" data-id="'+f.id+'">حذف</button>')+
+      '</div>'+
+    '</div>';
+    return html;
+  }
+
+  function renderFollowupsTab(){
+    var pend=pendingFollowups();
+    var fc=pendingFollowupCounts();
+    var html='<div class="stat-row">'+
+      '<div class="stat-card'+(fc.urgent?" acc-maroon alarm":" acc-maroon")+'"><div class="num">'+toFaDigits(fc.urgent)+'</div><div class="lbl">فوری</div></div>'+
+      '<div class="stat-card acc-slate"><div class="num">'+toFaDigits(fc.normal)+'</div><div class="lbl">عادی</div></div>'+
+      '<div class="stat-card acc-brass"><div class="num">'+toFaDigits(fc.total)+'</div><div class="lbl">کل پیگیری‌های در انتظار</div></div>'+
+    '</div>';
+    html+='<div class="section-title">پیگیری‌های در انتظار <span class="count">'+toFaDigits(pend.length)+'</span>'+helpBtn("followups-tab")+'</div>';
+    if(!pend.length){
+      html+='<div class="empty">در حال حاضر پیگیری در انتظاری ثبت نشده است. برای افزودن، وارد صفحهٔ همان پرونده شوید.</div>';
+    } else {
+      pend.forEach(function(row){ html+=followupRow(row,true); });
+    }
+    return html;
+  }
+
+
+  function renderCases(){
+    var q=toLatinDigits(state.searchQuery||"").trim().toLowerCase();
+    var filtered=state.cases.filter(function(c){
+      if(state.filterCourt && c.courtType!==state.filterCourt) return false;
+      if(state.filterStatus && c.status!==state.filterStatus) return false;
+      if(!q) return true;
+      var hay=toLatinDigits([c.caseNumber,c.fileNumber,c.branch,c.client,c.plaintiff,c.defendant,c.subject,c.nextAction].join(" ")).toLowerCase();
+      return hay.indexOf(q)!==-1;
+    });
+    filtered.sort(function(a,b){
+      var da=nextTrackedDiff(a), db=nextTrackedDiff(b);
+      if(da===null&&db===null) return 0;
+      if(da===null) return 1;
+      if(db===null) return -1;
+      return da-db;
+    });
+
+    var courtOpts='<option value="">همهٔ مراجع</option>';
+    Object.keys(COURTS).forEach(function(k){
+      courtOpts+='<option value="'+k+'"'+(state.filterCourt===k?" selected":"")+'>'+COURTS[k].label+'</option>';
+    });
+    var statusOpts='<option value="">همهٔ وضعیت‌ها</option>';
+    Object.keys(STATUS_META).forEach(function(k){
+      statusOpts+='<option value="'+k+'"'+(state.filterStatus===k?" selected":"")+'>'+STATUS_META[k].label+'</option>';
+    });
+
+    var html='<div class="filter-bar no-print">'+
+      '<input type="text" placeholder="جستجو در شماره پرونده، بایگانی، موکل، طرفین، موضوع…" data-act="search" value="'+escapeHtml(state.searchQuery||"")+'">'+
+      '<select data-act="filter-court">'+courtOpts+'</select>'+
+      '<select data-act="filter-status">'+statusOpts+'</select>'+
+    '</div>';
+
+    html+='<div class="cases-layout">';
+    html+='<div class="case-list '+(state.selectedCaseId?"col-hidden":"")+'">';
+    if(!filtered.length){
+      html+='<div class="empty">'+(state.cases.length===0?"هنوز پرونده‌ای ثبت نشده است.":"پرونده‌ای با این فیلترها یافت نشد.")+'</div>';
+    } else {
+      filtered.forEach(function(c){
+        var sm=STATUS_META[c.status]||STATUS_META.active;
+        var ct=court(c.courtType);
+        var nd=nextTrackedDiff(c);
+        html+='<button class="case-card '+(state.selectedCaseId===c.id?"selected":"")+(c.status!=="active"?" dim":"")+'" '+
+          'style="border-inline-end-color:'+ct.color+'" data-act="open-case" data-id="'+c.id+'">'+
+          '<div class="cnum">'+escapeHtml(c.caseNumber||"بدون شماره")+
+            (c.fileNumber?' <span class="cfiling">| بایگانی '+escapeHtml(c.fileNumber)+'</span>':'')+'</div>'+
+          '<div class="cparties">'+escapeHtml([c.plaintiff,c.defendant].filter(Boolean).join(" / ")||"طرفین ثبت نشده")+'</div>'+
+          '<div class="csubject">'+escapeHtml(c.subject||"")+'</div>'+
+          '<div class="cmeta">'+
+            '<span class="badge '+ct.badge+'">'+ct.label+'</span>'+
+            '<span class="badge '+sm.badge+'">'+sm.label+'</span>'+
+            (c.branch?'<span class="badge badge-muted">'+escapeHtml(c.branch)+'</span>':'')+
+            (nd!==null?'<span class="badge '+(nd<0?"badge-maroon":(nd<=3?"badge-maroon":"badge-slate"))+'">'+urgencyLabel(nd)+'</span>':'')+
+          '</div>'+
+        '</button>';
+      });
+    }
+    html+='</div>';
+    html+='<div class="'+(!state.selectedCaseId?"col-hidden":"")+'">'+renderCaseDetail()+'</div>';
+    html+='</div>';
+    return html;
+  }
+
+  function renderCaseDetail(){
+    var c=getCase(state.selectedCaseId);
+    if(!c) return '<div class="detail-panel"><div class="empty">پرونده‌ای را از فهرست انتخاب کنید.</div></div>';
+    loadAttachmentsFor(c.id);
+    var sm=STATUS_META[c.status]||STATUS_META.active;
+    var ct=court(c.courtType);
+    var events=c.events.slice().sort(function(a,b){ return String(b.date).localeCompare(String(a.date)); });
+
+    var html='<div class="detail-panel">';
+    var p=state.profile||{};
+    var pName=[p.firstName,p.lastName].filter(Boolean).join(" ");
+    html+='<div class="print-only">'+
+      '<div style="font-weight:800;font-size:15px;">'+escapeHtml(p.displayTitle||pName||"دفتر پرونده‌ها")+'</div>'+
+      (pName?'<div>'+escapeHtml(pName)+(p.role?' — '+escapeHtml(p.role):'')+'</div>':'')+
+      '<div>تاریخ تهیه گزارش: '+formatDateDisplay(todayStr())+'</div>'+
+    '</div>';
+    html+='<button class="btn btn-ghost btn-sm mobile-only no-print" data-act="close-detail" style="margin-bottom:10px;">‹ بازگشت به فهرست</button>';
+    html+='<div class="detail-head"><div style="min-width:0;">'+
+      '<div class="cnum-big">'+escapeHtml(c.caseNumber||"بدون شماره")+'</div>'+
+      '<div class="court-line"><span class="badge '+ct.badge+'">'+ct.label+'</span>'+
+      '<span class="badge '+sm.badge+'">'+sm.label+'</span>'+
+      '<span class="badge '+(OUTCOME_META[c.outcome]||OUTCOME_META.pending).badge+'">'+(OUTCOME_META[c.outcome]||OUTCOME_META.pending).label+'</span>'+
+      (c.branch?'<span class="badge badge-muted">'+escapeHtml(c.branch)+'</span>':'')+'</div>'+
+      '<div class="info-grid">'+
+        '<div><div class="lbl">شماره بایگانی</div><div class="val">'+escapeHtml(c.fileNumber||"—")+'</div></div>'+
+        '<div><div class="lbl">موکل</div><div class="val">'+escapeHtml(c.client||"—")+'</div></div>'+
+        '<div><div class="lbl">سمت موکل</div><div class="val">'+escapeHtml(c.clientRole||"—")+'</div></div>'+
+        '<div><div class="lbl">'+ct.p+'</div><div class="val">'+escapeHtml(c.plaintiff||"—")+'</div></div>'+
+        '<div><div class="lbl">'+ct.d+'</div><div class="val">'+escapeHtml(c.defendant||"—")+'</div></div>'+
+        '<div><div class="lbl">موضوع</div><div class="val">'+escapeHtml(c.subject||"—")+'</div></div>'+
+        '<div><div class="lbl">تاریخ ثبت پرونده</div><div class="val">'+formatDateDisplay(c.openedDate||"—")+'</div></div>'+
+        '<div><div class="lbl">تاریخ نتیجه</div><div class="val">'+(c.outcomeDate?formatDateDisplay(c.outcomeDate):"—")+'</div></div>'+
+      '</div></div>'+
+      '<div class="detail-actions no-print">'+
+        '<button class="btn btn-sm" data-act="edit-case" data-id="'+c.id+'">ویرایش</button>'+
+        '<button class="btn btn-sm" data-act="print-case">چاپ / PDF</button>'+
+        '<button class="btn btn-danger btn-sm" data-act="delete-case" data-id="'+c.id+'">حذف</button>'+
+      '</div>'+
+    '</div>';
+
+    if(c.nextAction){
+      html+='<div class="next-action"><div class="lbl">وضعیت فعلی و اقدام بعدی</div><div class="txt">'+escapeHtml(c.nextAction)+'</div></div>';
+    }
+
+    html+=renderFinanceSection(c);
+    html+=renderFollowupsSection(c);
+    html+=renderAttachmentsSection(c);
+
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap;">'+
+      '<div class="section-title" style="margin:0;">سوابق، لوایح، مواعد و اقدامات <span class="count">'+toFaDigits(events.length)+'</span></div>'+
+      '<button class="btn btn-primary btn-sm no-print" data-act="new-event" data-id="'+c.id+'">+ افزودن رویداد</button>'+
+    '</div>';
+
+    if(!events.length){
+      html+='<div class="empty">هنوز رویدادی برای این پرونده ثبت نشده است.</div>';
+    } else {
+      html+='<div class="timeline">';
+      events.forEach(function(e){
+        var meta=EVENT_TYPES[e.type]||EVENT_TYPES.other;
+        var diff=daysDiff(e.date);
+        var isOver=isTracked(e.type)&&!e.done&&diff!==null&&diff<0;
+        html+='<div class="tl-item"><div class="tl-dot '+meta.dot+'"></div>'+
+          '<div class="tl-card'+(e.done?" is-done":"")+(isOver?" is-overdue":"")+'">'+
+            '<div class="tl-top"><span class="tl-date">'+formatDateDisplay(e.date)+
+              (isTracked(e.type)&&!e.done&&diff!==null?' <span style="font-weight:600;font-size:11px;color:var(--text-muted);">('+urgencyLabel(diff)+')</span>':'')+
+              '</span><span class="badge '+meta.badge+'">'+meta.label+(e.done?" ✓":"")+'</span></div>'+
+            '<div class="tl-title">'+escapeHtml(e.title||"")+'</div>'+
+            (e.description?'<div class="tl-desc">'+escapeHtml(e.description)+'</div>':'')+
+            '<div class="tl-actions no-print">'+
+              (isTracked(e.type)?'<button class="btn btn-ghost btn-sm" data-act="toggle-done" data-case="'+c.id+'" data-id="'+e.id+'">'+(e.done?"بازگرداندن به فهرست":"انجام شد")+'</button>':'')+
+              '<button class="btn btn-ghost btn-sm" data-act="edit-event" data-case="'+c.id+'" data-id="'+e.id+'">ویرایش</button>'+
+              '<button class="btn btn-ghost btn-sm" data-act="delete-event" data-case="'+c.id+'" data-id="'+e.id+'">حذف</button>'+
+            '</div>'+
+          '</div></div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+    return html;
+  }
+
+  function renderFollowupsSection(c){
+    var items=c.followups.slice().sort(function(a,b){
+      if(a.done!==b.done) return a.done?1:-1;
+      if(a.priority!==b.priority) return a.priority==="urgent"?-1:1;
+      return String(b.date).localeCompare(String(a.date));
+    });
+    var html='<div style="margin-bottom:20px;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">'+
+      '<div class="section-title" style="margin:0;">پیگیری‌ها <span class="count">'+toFaDigits(items.filter(function(f){return !f.done;}).length)+'</span></div>'+
+      '<button class="btn btn-primary btn-sm" data-act="new-followup" data-id="'+c.id+'">+ افزودن پیگیری</button>'+
+    '</div>';
+    if(!items.length){
+      html+='<div class="empty">هنوز پیگیری‌ای برای این پرونده ثبت نشده است.</div>';
+    } else {
+      items.forEach(function(f){ html+=followupRow({caseId:c.id, caseObj:c, item:f}, false); });
+    }
+    html+='</div>';
+    return html;
+  }
+
+  function renderAttachmentsSection(c){
+    var html='<div style="margin-bottom:20px;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">'+
+      '<div class="section-title" style="margin:0;">پیوست‌ها و اسناد'+helpBtn("attachments")+'</div>'+
+      (attachmentsOK?'<button class="btn btn-primary btn-sm no-print" data-act="new-attachment" data-id="'+c.id+'">+ افزودن پیوست</button>':'')+
+    '</div>';
+
+    if(!attachmentsOK){
+      html+='<div class="empty">در این محیط امکان ذخیرهٔ فایل داخل مرورگر فراهم نیست. فایل را همان‌جا که هست نگه دارید یا این صفحه را در مرورگر خودتان (نه پیش‌نمایش) باز کنید.</div></div>';
+      return html;
+    }
+
+    var list=state.attachmentsByCase[c.id];
+    if(list==="loading"||list===undefined){
+      html+='<div class="empty">در حال بارگذاری پیوست‌ها…</div></div>';
+      return html;
+    }
+    if(!list.length){
+      html+='<div class="empty">هنوز پیوستی برای این پرونده اضافه نشده است.</div>';
+    } else {
+      html+='<div class="attach-list">';
+      list.forEach(function(a){
+        html+='<div class="attach-row">'+
+          '<div class="attach-info">'+
+            '<div class="attach-title">'+escapeHtml(a.title||a.fileName)+'</div>'+
+            '<div class="attach-meta">'+escapeHtml(a.fileName)+' · '+formatBytes(a.size||0)+' · '+formatDateDisplay(a.date)+'</div>'+
+          '</div>'+
+          '<div class="attach-actions">'+
+            '<button class="btn btn-ghost btn-sm" data-act="download-attachment" data-id="'+a.id+'" data-case="'+c.id+'">دانلود</button>'+
+            '<button class="btn btn-ghost btn-sm" data-act="delete-attachment" data-id="'+a.id+'" data-case="'+c.id+'">حذف</button>'+
+          '</div>'+
+        '</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+    return html;
+  }
+
+
+  function renderFinanceSection(c){
+    var fins=(c.finance||[]).slice().sort(function(a,b){
+      return String(b.date).localeCompare(String(a.date)) || String(b.createdAt||"").localeCompare(String(a.createdAt||""));
+    });
+    var t=caseFinTotals(c);
+    var html='<div style="margin-bottom:20px;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">'+
+      '<div class="section-title" style="margin:0;">'+ico("coins")+' امور مالی و پرداختی‌ها <span class="count">'+toFaDigits(fins.length)+'</span>'+helpBtn("fin-section")+'</div>'+
+      '<div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;">'+
+        '<button class="btn btn-primary btn-sm" data-act="new-fin" data-kind="income" data-id="'+c.id+'">+ ثبت دریافتی</button>'+
+        '<button class="btn btn-sm" data-act="new-fin" data-kind="expense" data-id="'+c.id+'">+ ثبت هزینه</button>'+
+      '</div>'+
+    '</div>';
+    if(fins.length){
+      html+='<div class="fin-sum">'+
+        '<div class="stat-card acc-sage"><div class="num money pos">'+formatMoney(t.income)+'</div><div class="lbl">جمع دریافتی‌ها (تومان)</div></div>'+
+        '<div class="stat-card acc-maroon"><div class="num money neg">'+formatMoney(t.expense)+'</div><div class="lbl">جمع هزینه‌های پرونده</div></div>'+
+        '<div class="stat-card acc-amber"><div class="num money" style="color:var(--amber);">'+formatMoney(t.lawyerPaid)+'</div><div class="lbl">پرداختیِ وکیل از هزینه‌ها</div></div>'+
+        '<div class="stat-card acc-violet"><div class="num money'+(t.clientDue>0?" neg":(t.clientDue<0?" pos":""))+'">'+formatMoney(t.clientDue)+'</div><div class="lbl">ماندهٔ هزینه‌های قابل مطالبه از موکل'+helpBtn("fin-clientdue")+'</div></div>'+
+      '</div>';
+    }
+    if(!fins.length){
+      html+='<div class="empty">هنوز تراکنش مالی برای این پرونده ثبت نشده است. با دکمه‌های بالا اولین دریافتی یا هزینه را ثبت کنید تا جمع‌ها به‌صورت خودکار محاسبه شود.</div>';
+    } else {
+      html+='<div class="fin-list">';
+      fins.forEach(function(x){
+        var km=FIN_KIND[x.kind]||FIN_KIND.expense;
+        var cat=FIN_CATS[x.category];
+        var payer=FIN_PAYERS[x.payer];
+        html+='<div class="fin-row k-'+x.kind+'">'+
+          '<div class="fin-main">'+
+            '<div class="fin-top">'+
+              '<span class="fin-amount">'+formatMoney(x.amount)+' تومان</span>'+
+              '<span class="badge '+km.badge+'">'+km.label+'</span>'+
+              (cat?'<span class="badge badge-muted">'+cat.label+'</span>':'')+
+              '<span class="fin-date">'+formatDateDisplay(x.date)+'</span>'+
+            '</div>'+
+            '<div class="fin-meta">'+
+              (payer?'<span>پرداخت‌کننده: <b>'+payer.label+'</b></span>':'')+
+              (x.account?'<span>واریز به: <b>'+escapeHtml(x.account)+'</b></span>':'')+
+              (x.refNo?'<span>شماره پیگیری: <b>'+escapeHtml(toFaDigits(x.refNo))+'</b></span>':'')+
+            '</div>'+
+            (x.description?'<div class="fin-desc">'+escapeHtml(x.description)+'</div>':'')+
+          '</div>'+
+          '<div class="fin-actions no-print">'+
+            '<button class="btn btn-ghost btn-sm" data-act="edit-fin" data-case="'+c.id+'" data-id="'+x.id+'">ویرایش</button>'+
+            '<button class="btn btn-ghost btn-sm" data-act="delete-fin" data-case="'+c.id+'" data-id="'+x.id+'">حذف</button>'+
+          '</div>'+
+        '</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+    return html;
+  }
+
+  function renderModal(){
+    var m=state.modal;
+    if(m.type==="case") return renderCaseModal(m);
+    if(m.type==="fin") return renderFinModal(m);
+    if(m.type==="event") return renderEventModal(m);
+    if(m.type==="confirm") return renderConfirmModal(m);
+    if(m.type==="import-confirm") return renderImportConfirmModal(m);
+    if(m.type==="profile") return renderProfileModal(m);
+    if(m.type==="attachment") return renderAttachmentModal(m);
+    if(m.type==="followup") return renderFollowupModal(m);
+    return "";
+  }
+  function opt(v,l,sel){ return '<option value="'+v+'"'+(sel?" selected":"")+'>'+l+'</option>'; }
+
+  function renderCaseModal(m){
+    var c=m.id?getCase(m.id):null;
+    var v=m.values||c||{courtType:"civil",status:"active",openedDate:todayStr(),outcome:"pending",outcomeDate:""};
+    var err=m.errors||{};
+    var ct=court(v.courtType);
+    var courtOpts=""; Object.keys(COURTS).forEach(function(k){ courtOpts+=opt(k,COURTS[k].label,v.courtType===k); });
+    var statusOpts=""; Object.keys(STATUS_META).forEach(function(k){ statusOpts+=opt(k,STATUS_META[k].label,v.status===k); });
+    var outcomeOpts=""; Object.keys(OUTCOME_META).forEach(function(k){ outcomeOpts+=opt(k,OUTCOME_META[k].label,(v.outcome||"pending")===k); });
+
+    return '<div class="modal-backdrop" data-act="backdrop"><div class="modal">'+
+      '<h3>'+(m.id?"ویرایش پرونده":"پرونده جدید")+'</h3>'+
+      '<form data-form="case">'+
+        '<div class="field"><label>مرجع رسیدگی'+helpBtn("court-type")+'</label><select name="courtType" data-act="court-change">'+courtOpts+'</select></div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>شماره پرونده (کلاسه)</label><input type="text" name="caseNumber" value="'+escapeHtml(v.caseNumber||"")+'">'+(err.caseNumber?'<div class="err">'+err.caseNumber+'</div>':'')+'</div>'+
+          '<div class="field"><label>شماره بایگانی</label><input type="text" name="fileNumber" value="'+escapeHtml(v.fileNumber||"")+'"></div>'+
+        '</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>شعبه</label><input type="text" name="branch" value="'+escapeHtml(v.branch||"")+'"></div>'+
+          '<div class="field"><label>تاریخ ثبت/ورود پرونده</label><input type="text" name="openedDate" value="'+escapeHtml(v.openedDate||todayStr())+'" placeholder="۱۴۰۵/۰۶/۰۵">'+(err.openedDate?'<div class="err">'+err.openedDate+'</div>':'')+'</div>'+
+          '<div class="field"><label>وضعیت</label><select name="status">'+statusOpts+'</select></div>'+
+        '</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>نتیجه پرونده</label><select name="outcome">'+outcomeOpts+'</select></div>'+
+          '<div class="field"><label>تاریخ نتیجه'+helpBtn("outcome-date")+'</label><input type="text" name="outcomeDate" value="'+escapeHtml(v.outcomeDate||"")+'" placeholder="در صورت برد/باخت">'+(err.outcomeDate?'<div class="err">'+err.outcomeDate+'</div>':'')+'</div>'+
+        '</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>نام موکل</label><input type="text" name="client" value="'+escapeHtml(v.client||"")+'"></div>'+
+          '<div class="field"><label>سمت موکل</label><input type="text" name="clientRole" value="'+escapeHtml(v.clientRole||"")+'" placeholder="مثلاً وکیل '+ct.p+'"></div>'+
+        '</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>'+ct.p+'</label><input type="text" name="plaintiff" value="'+escapeHtml(v.plaintiff||"")+'"></div>'+
+          '<div class="field"><label>'+ct.d+'</label><input type="text" name="defendant" value="'+escapeHtml(v.defendant||"")+'"></div>'+
+        '</div>'+
+        '<div class="field"><label>موضوع</label><input type="text" name="subject" value="'+escapeHtml(v.subject||"")+'"></div>'+
+        '<div class="field"><label>وضعیت فعلی و اقدام بعدی'+helpBtn("next-action")+'</label><textarea name="nextAction" placeholder="مثلاً: منتظر ابلاغ نظریه کارشناس؛ در صورت وصول، لایحه اعتراض ظرف مهلت قانونی تقدیم شود.">'+escapeHtml(v.nextAction||"")+'</textarea></div>'+
+        '<div class="modal-actions">'+
+          '<button type="button" class="btn btn-ghost" data-act="close-modal">انصراف</button>'+
+          '<button type="submit" class="btn btn-primary">ذخیره پرونده</button>'+
+        '</div>'+
+      '</form>'+
+    '</div></div>';
+  }
+
+  function renderEventModal(m){
+    var c=getCase(m.caseId);
+    var ev=m.eventId?c.events.filter(function(e){return e.id===m.eventId;})[0]:null;
+    var v=m.values||ev||{type:"hearing",date:todayStr()};
+    var err=m.errors||{};
+    var typeOpts=""; Object.keys(EVENT_TYPES).forEach(function(k){ typeOpts+=opt(k,EVENT_TYPES[k].label,v.type===k); });
+    var presets=""; PRESETS.forEach(function(p){
+      presets+='<button type="button" class="preset" data-act="preset" data-days="'+p.days+'">'+p.label+' ('+toFaDigits(p.days)+' روز)</button>';
+    });
+
+    return '<div class="modal-backdrop" data-act="backdrop"><div class="modal">'+
+      '<h3>'+(m.eventId?"ویرایش رویداد":"افزودن رویداد")+' — '+escapeHtml(c.caseNumber||"")+'</h3>'+
+      '<form data-form="event">'+
+        '<div class="field-row">'+
+          '<div class="field"><label>نوع رویداد</label><select name="type">'+typeOpts+'</select></div>'+
+          '<div class="field"><label>تاریخ (شمسی)'+helpBtn("date-2digit")+'</label><input type="text" name="date" id="eventDate" value="'+escapeHtml(v.date||todayStr())+'" placeholder="۱۴۰۵/۰۶/۱۰">'+(err.date?'<div class="err">'+err.date+'</div>':'')+'</div>'+
+        '</div>'+
+        '<div class="calc-box no-print">'+
+          '<div class="calc-title">محاسبهٔ سررسید'+helpBtn("deadline-calc")+'</div>'+
+          '<div class="preset-row">'+presets+'</div>'+
+          '<div class="field-row" style="margin-bottom:0;">'+
+            '<div class="field" style="margin-bottom:0;"><label>مبدأ محاسبه (تاریخ ابلاغ)</label><input type="text" id="calcFrom" value="'+todayStr()+'"></div>'+
+            '<div class="field" style="margin-bottom:0;"><label>تعداد روز</label><input type="number" id="calcDays" value="10" min="1"></div>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;">'+
+            '<button type="button" class="btn btn-sm" data-act="calc-run">محاسبه و درج در تاریخ</button>'+
+            '<span id="calcResult" style="font-size:12px;color:var(--brass);font-weight:700;"></span>'+
+          '</div>'+
+        '</div>'+
+        '<div class="field"><label>عنوان</label><input type="text" name="title" value="'+escapeHtml(v.title||"")+'">'+(err.title?'<div class="err">'+err.title+'</div>':'')+'</div>'+
+        '<div class="field"><label>توضیحات</label><textarea name="description">'+escapeHtml(v.description||"")+'</textarea></div>'+
+        '<div class="modal-actions">'+
+          '<button type="button" class="btn btn-ghost" data-act="close-modal">انصراف</button>'+
+          '<button type="submit" class="btn btn-primary">ذخیره رویداد</button>'+
+        '</div>'+
+      '</form>'+
+    '</div></div>';
+  }
+
+  function renderProfileModal(m){
+    var v=m.values||state.profile||{};
+    var err=m.errors||{};
+    return '<div class="modal-backdrop" data-act="backdrop"><div class="modal">'+
+      '<h3>مشخصات وکیل</h3>'+
+      '<form data-form="profile">'+
+        profileFields(v)+
+        (err.name?'<div class="err" style="margin-bottom:10px;">'+err.name+'</div>':'')+
+        '<div class="modal-actions">'+
+          '<button type="button" class="btn btn-ghost" data-act="close-modal">انصراف</button>'+
+          '<button type="submit" class="btn btn-primary">ذخیره</button>'+
+        '</div>'+
+      '</form>'+
+    '</div></div>';
+  }
+
+  function renderAttachmentModal(m){
+    var c=getCase(m.caseId);
+    var err=m.errors||{};
+    return '<div class="modal-backdrop" data-act="backdrop"><div class="modal">'+
+      '<h3>افزودن پیوست — '+escapeHtml(c.caseNumber||"")+'</h3>'+
+      '<form data-form="attachment">'+
+        '<div class="field"><label>انتخاب فایل'+helpBtn("attach-modal")+'</label><input type="file" name="file" id="attFile">'+
+          (err.file?'<div class="err">'+err.file+'</div>':'')+
+          '<div class="hint" id="attSizeHint"></div></div>'+
+        '<div class="field"><label>عنوان</label><input type="text" name="title" id="attTitle" value="'+escapeHtml(m.titleValue||"")+'" placeholder="مثلاً: لایحه دفاعیه مرحله بدوی">'+
+          (err.title?'<div class="err">'+err.title+'</div>':'')+'</div>'+
+        '<div class="modal-actions">'+
+          '<button type="button" class="btn btn-ghost" data-act="close-modal">انصراف</button>'+
+          '<button type="submit" class="btn btn-primary" id="attSubmitBtn">ذخیره پیوست</button>'+
+        '</div>'+
+      '</form>'+
+    '</div></div>';
+  }
+
+  function renderFollowupModal(m){
+    var c=getCase(m.caseId);
+    var f=m.followupId?c.followups.filter(function(x){return x.id===m.followupId;})[0]:null;
+    var v=m.values||f||{priority:"normal",dueDate:""};
+    var err=m.errors||{};
+    return '<div class="modal-backdrop" data-act="backdrop"><div class="modal">'+
+      '<h3>'+(m.followupId?"ویرایش پیگیری":"افزودن پیگیری")+' — '+escapeHtml(c.caseNumber||"")+'</h3>'+
+      '<form data-form="followup">'+
+        '<div class="field-row">'+
+          '<div class="field"><label>عنوان</label><input type="text" name="title" value="'+escapeHtml(v.title||"")+'" placeholder="مثلاً: تماس با موکل برای اخذ مدارک">'+
+            (err.title?'<div class="err">'+err.title+'</div>':'')+'</div>'+
+          '<div class="field"><label>اولویت</label><select name="priority">'+
+            opt("normal",PRIORITY_META.normal.label,v.priority!=="urgent")+opt("urgent",PRIORITY_META.urgent.label,v.priority==="urgent")+
+          '</select></div>'+
+        '</div>'+
+        '<div class="field"><label>سررسید پیگیری (اختیاری، شمسی)</label><input type="text" name="dueDate" value="'+escapeHtml(v.dueDate||"")+'" placeholder="۱۴۰۵/۰۶/۱۰">'+(err.dueDate?'<div class="err">'+err.dueDate+'</div>':'')+'</div>'+
+        '<div class="field"><label>توضیحات (اختیاری)</label><textarea name="description">'+escapeHtml(v.description||"")+'</textarea></div>'+
+        '<div class="modal-actions">'+
+          '<button type="button" class="btn btn-ghost" data-act="close-modal">انصراف</button>'+
+          '<button type="submit" class="btn btn-primary">ذخیره پیگیری</button>'+
+        '</div>'+
+      '</form>'+
+    '</div></div>';
+  }
+
+  function renderFinModal(m){
+    var c=getCase(m.caseId);
+    var entry=m.finId?(c.finance||[]).filter(function(x){return x.id===m.finId;})[0]:null;
+    var kd=m.kindDefault==="income"?"income":"expense";
+    var v=m.values||entry||{ kind:kd, category:finDefaultCat(kd), date:todayStr(), payer:finDefaultPayer(kd) };
+    var err=m.errors||{};
+    var kind=v.kind==="income"?"income":"expense";
+    var kindOpts=opt("income",FIN_KIND.income.label,kind==="income")+opt("expense",FIN_KIND.expense.label,kind==="expense");
+    var catOpts=""; Object.keys(FIN_CATS).forEach(function(k){ if(FIN_CATS[k].kind===kind) catOpts+=opt(k,FIN_CATS[k].label,v.category===k); });
+    var payerSel=v.payer||finDefaultPayer(kind);
+    var payerOpts=""; Object.keys(FIN_PAYERS).forEach(function(k){ payerOpts+=opt(k,FIN_PAYERS[k].label,payerSel===k); });
+    var amtVal=(typeof v.amount==="number")?formatMoney(v.amount):(v.amount||"");
+    return '<div class="modal-backdrop" data-act="backdrop"><div class="modal">'+
+      '<h3>'+(m.finId?"ویرایش تراکنش مالی":"ثبت تراکنش مالی")+' — '+escapeHtml(c.caseNumber||"")+'</h3>'+
+      '<form data-form="fin">'+
+        '<div class="field-row">'+
+          '<div class="field"><label>نوع تراکنش</label><select name="kind" data-act="fin-kind-change">'+kindOpts+'</select></div>'+
+          '<div class="field"><label>بابت</label><select name="category">'+catOpts+'</select></div>'+
+        '</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>مبلغ (تومان)</label><input type="text" name="amount" id="finAmount" inputmode="numeric" value="'+escapeHtml(amtVal)+'" placeholder="مثلاً ۲٬۵۰۰٬۰۰۰">'+
+            (err.amount?'<div class="err">'+err.amount+'</div>':'')+
+            '<div class="hint" id="finWords"></div></div>'+
+          '<div class="field"><label>تاریخ (شمسی)</label><input type="text" name="date" value="'+escapeHtml(v.date||todayStr())+'" placeholder="۱۴۰۵/۰۶/۱۰">'+
+            (err.date?'<div class="err">'+err.date+'</div>':'')+'</div>'+
+        '</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>پرداخت‌کننده'+helpBtn("fin-payer")+'</label><select name="payer">'+payerOpts+'</select></div>'+
+          '<div class="field"><label>واریز به حساب / مقصد وجه</label><input type="text" name="account" value="'+escapeHtml(v.account||"")+'" placeholder="مثلاً: حساب سپردهٔ دادگستری، کارت بانک ملت وکیل…"></div>'+
+        '</div>'+
+        '<div class="field"><label>شماره فیش / کد پیگیری (اختیاری)</label><input type="text" name="refNo" value="'+escapeHtml(v.refNo||"")+'"></div>'+
+        '<div class="field"><label>توضیحات (اختیاری)</label><textarea name="description" placeholder="مثلاً: هزینه دادرسی مرحله تجدیدنظر — پرداخت از طریق دفتر خدمات قضایی">'+escapeHtml(v.description||"")+'</textarea></div>'+
+        '<div class="modal-actions">'+
+          '<button type="button" class="btn btn-ghost" data-act="close-modal">انصراف</button>'+
+          '<button type="submit" class="btn btn-primary">ذخیره تراکنش</button>'+
+        '</div>'+
+      '</form>'+
+    '</div></div>';
+  }
+
+  function renderConfirmModal(m){
+    return '<div class="modal-backdrop" data-act="backdrop"><div class="modal">'+
+      '<h3>تأیید حذف</h3><div class="confirm-text">'+escapeHtml(m.message)+'</div>'+
+      '<div class="modal-actions"><button class="btn btn-ghost" data-act="close-modal">انصراف</button>'+
+      '<button class="btn btn-danger" data-act="confirm-yes">حذف شود</button></div>'+
+    '</div></div>';
+  }
+  function renderImportConfirmModal(m){
+    var n=(m.data&&m.data.cases)?m.data.cases.length:0;
+    return '<div class="modal-backdrop" data-act="backdrop"><div class="modal">'+
+      '<h3>بازیابی از فایل پشتیبان</h3>'+
+      '<div class="confirm-text">این فایل شامل '+toFaDigits(n)+' پرونده است. با بازیابی، تمام پرونده‌های فعلی این دستگاه جایگزین می‌شود و قابل بازگشت نیست. در صورت نیاز، ابتدا از وضعیت فعلی همین دستگاه خروجی پشتیبان بگیرید.<br><br>مشخصات وکیلِ موجود در فایل پشتیبان نیز بازیابی می‌شود. اگر فایل شامل پیوست باشد، پیوست‌های فعلی پس از تأیید جایگزین خواهند شد.</div>'+
+      '<div class="modal-actions"><button class="btn btn-ghost" data-act="close-modal">انصراف</button>'+
+      '<button class="btn btn-danger" data-act="confirm-import">جایگزینی و بازیابی</button></div>'+
+    '</div></div>';
+  }
+
+  /* ---------------- events ---------------- */
+  function bindEvents(){
+    root.querySelectorAll("[data-act]").forEach(function(el){
+      var act=el.getAttribute("data-act");
+      if(act==="search"||act==="filter-court"||act==="filter-status"||act==="court-change"||act==="font-range"||act==="icon-range"||act==="font-range-panel"||act==="icon-range-panel") return;
+      el.addEventListener("click",function(ev){
+        if(act==="view"){ state.view=el.getAttribute("data-view"); state.selectedCaseId=null; state.appearanceOpen=false; render(); }
+        else if(act==="stats-period"){ var sp=el.getAttribute("data-period"); state.statsPeriod=(sp==="week"||sp==="year")?sp:"month"; render(); }
+        else if(act==="toggle-appearance"){ state.appearanceOpen=!state.appearanceOpen; render(); }
+        else if(act==="close-appearance"){ state.appearanceOpen=false; render(); }
+        else if(act==="set-font-scale"){ patchAppearance({fontScale:parseFloat(el.getAttribute("data-scale"))}); }
+        else if(act==="set-icon-scale"){ patchAppearance({iconScale:parseFloat(el.getAttribute("data-scale"))}); }
+        else if(act==="set-palette"){ patchAppearance({palette:el.getAttribute("data-palette")}); }
+        else if(act==="font-down"){ bumpAppearance("fontScale",-1); }
+        else if(act==="font-up"){ bumpAppearance("fontScale",1); }
+        else if(act==="icon-down"){ bumpAppearance("iconScale",-1); }
+        else if(act==="icon-up"){ bumpAppearance("iconScale",1); }
+        else if(act==="new-case"){ state.modal={type:"case"}; render(); }
+        else if(act==="edit-case"){ state.modal={type:"case",id:el.getAttribute("data-id")}; render(); }
+        else if(act==="delete-case"){
+          var cid=el.getAttribute("data-id");
+          state.modal={type:"confirm",message:"پرونده و تمام رویدادهای آن حذف خواهد شد. ادامه می‌دهید؟",onConfirm:function(){ deleteCase(cid); state.view="cases"; }};
+          render();
+        }
+        else if(act==="open-case"){ state.selectedCaseId=el.getAttribute("data-id"); state.view="cases"; loadAttachmentsFor(state.selectedCaseId); render(); window.scrollTo(0,0); }
+        else if(act==="close-detail"){ state.selectedCaseId=null; render(); }
+        else if(act==="print-case"){ window.print(); }
+        else if(act==="new-event"){ state.modal={type:"event",caseId:el.getAttribute("data-id")}; render(); }
+        else if(act==="edit-event"){ state.modal={type:"event",caseId:el.getAttribute("data-case"),eventId:el.getAttribute("data-id")}; render(); }
+        else if(act==="toggle-done"){ toggleEventDone(el.getAttribute("data-case"),el.getAttribute("data-id")); render(); }
+        else if(act==="delete-event"){
+          var kc=el.getAttribute("data-case"), ke=el.getAttribute("data-id");
+          state.modal={type:"confirm",message:"این رویداد حذف شود؟",onConfirm:function(){ deleteEvent(kc,ke); }};
+          render();
+        }
+        else if(act==="new-attachment"){ state.modal={type:"attachment",caseId:el.getAttribute("data-id")}; render(); }
+        else if(act==="download-attachment"){
+          var dcId=el.getAttribute("data-case"), daId=el.getAttribute("data-id");
+          var arr=state.attachmentsByCase[dcId];
+          var rec=Array.isArray(arr)?arr.filter(function(x){return x.id===daId;})[0]:null;
+          if(rec&&rec.data){
+            try{
+              var url=URL.createObjectURL(rec.data);
+              var link=document.createElement("a");
+              link.href=url; link.download=rec.fileName||"attachment";
+              document.body.appendChild(link); link.click(); document.body.removeChild(link);
+              setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+            }catch(e){ showToast("دانلود پیوست ممکن نشد."); }
+          }
+        }
+        else if(act==="delete-attachment"){
+          var xcId=el.getAttribute("data-case"), xaId=el.getAttribute("data-id");
+          state.modal={type:"confirm",message:"این پیوست حذف شود؟ این کار قابل بازگشت نیست.",onConfirm:function(){
+            deleteAttachment(xaId).then(function(){
+              var arr=state.attachmentsByCase[xcId];
+              if(Array.isArray(arr)) state.attachmentsByCase[xcId]=arr.filter(function(x){return x.id!==xaId;});
+              render();
+            }).catch(function(){ showToast("حذف پیوست ممکن نشد."); });
+          }};
+          render();
+        }
+        else if(act==="new-followup"){ state.modal={type:"followup",caseId:el.getAttribute("data-id")}; render(); }
+        else if(act==="edit-followup"){ state.modal={type:"followup",caseId:el.getAttribute("data-case"),followupId:el.getAttribute("data-id")}; render(); }
+        else if(act==="toggle-followup-done"){ toggleFollowupDone(el.getAttribute("data-case"),el.getAttribute("data-id")); render(); }
+        else if(act==="delete-followup"){
+          var fcId=el.getAttribute("data-case"), ffId=el.getAttribute("data-id");
+          state.modal={type:"confirm",message:"این پیگیری حذف شود؟",onConfirm:function(){ deleteFollowup(fcId,ffId); }};
+          render();
+        }
+        else if(act==="new-fin"){ state.modal={type:"fin",caseId:el.getAttribute("data-id"),kindDefault:el.getAttribute("data-kind")==="income"?"income":"expense"}; render(); }
+        else if(act==="edit-fin"){ state.modal={type:"fin",caseId:el.getAttribute("data-case"),finId:el.getAttribute("data-id")}; render(); }
+        else if(act==="delete-fin"){
+          var qcId=el.getAttribute("data-case"), qfId=el.getAttribute("data-id");
+          state.modal={type:"confirm",message:"این تراکنش مالی حذف شود؟ جمع‌های پرونده و آمار بلافاصله به‌روز می‌شود.",onConfirm:function(){ deleteFin(qcId,qfId); }};
+          render();
+        }
+        else if(act==="help"){ ev.preventDefault(); ev.stopPropagation(); toggleHelp(el, el.getAttribute("data-help")); }
+        else if(act==="snooze-backup"){ var mm=loadMeta(); mm.backupSnoozeUntil=Date.now()+7*86400000; saveMeta(mm); render(); }
+        else if(act==="close-modal"){ state.modal=null; render(); }
+        else if(act==="confirm-yes"){ if(state.modal&&state.modal.onConfirm) state.modal.onConfirm(); state.modal=null; render(); }
+        else if(act==="confirm-import"){
+          if(state.modal&&state.modal.data){
+            var imp=state.modal.data, oldAtts=[];
+            getAllAttachments().then(function(list){
+              oldAtts=list;
+              // پیش از حذف چیزی، همه داده‌های پیوست ورودی را decode می‌کنیم تا فایل خراب زودتر رد شود.
+              var staged=(imp.attachments||[]).map(function(a){
+                var blob=dataURLToBlob(a.dataURL);
+                return {id:a.id,caseId:a.caseId,title:a.title,fileName:a.fileName,mimeType:a.mimeType||blob.type,size:a.size||blob.size,date:a.date,data:blob};
+              });
+              return clearAllAttachments().then(function(){ return Promise.all(staged.map(addAttachment)); });
+            }).then(function(){
+              state.cases=imp.cases; if(imp.profile) state.profile=imp.profile;
+              if(imp.appearance&&typeof imp.appearance==="object") state.appearance=Object.assign(defaultAppearance(),imp.appearance);
+              state.attachmentsByCase={}; state.loadError=false; state.rawRecovery=null; saveState(); saveAppearance(); applyAppearance();
+              markBackupDone();
+              state.modal=null; state.selectedCaseId=null; render(); showToast("پشتیبان با موفقیت بازیابی شد.");
+            }).catch(function(){
+              // rollback پیوست‌ها در صورت شکست میانهٔ بازیابی
+              clearAllAttachments().then(function(){ return Promise.all(oldAtts.map(addAttachment)); }).catch(function(){});
+              showToast("بازیابی انجام نشد و داده‌های قبلی حفظ شدند.");
+            });
+          }
+        }
+        else if(act==="export"){ exportBackup(); }
+        else if(act==="export-raw"){ if(state.rawRecovery){ triggerDownload(new Blob([state.rawRecovery],{type:"application/json"}),"cases-raw-recovery-"+todayStr().replace(/\//g,"-")+".json"); } }
+        else if(act==="download-app"){ downloadAppFile(); }
+        else if(act==="edit-profile"){ state.modal={type:"profile"}; render(); }
+        else if(act==="import-trigger"){ var fi=root.querySelector("#importFile"); if(fi) fi.click(); }
+        else if(act==="preset"){
+          var dd=root.querySelector("#calcDays"); if(dd) dd.value=el.getAttribute("data-days");
+        }
+        else if(act==="calc-run"){
+          var out=root.querySelector("#calcResult");
+          function say(msg,bad){ if(out){ out.textContent=msg; out.style.color=bad?"var(--alarm)":"var(--brass)"; } }
+          var from=normalizeJalaliInput((root.querySelector("#calcFrom")||{}).value);
+          var days=parseInt(toLatinDigits((root.querySelector("#calcDays")||{}).value),10);
+          if(!from){ say("تاریخ مبدأ معتبر نیست.",true); return; }
+          if(!days||days<1){ say("تعداد روز معتبر نیست.",true); return; }
+          var res=addDaysToJalali(from,days);
+          var de=root.querySelector("#eventDate");
+          if(de&&res){
+            de.value=toFaDigits(res);
+            say("سررسید: "+toFaDigits(res)+" — در کادر تاریخ درج شد.",false);
+          }
+        }
+        else if(act==="backdrop"){ if(ev.target===el){ state.modal=null; render(); } }
+      });
+    });
+
+    function bindScaleRange(acts, key){
+      acts.forEach(function(actName){
+        root.querySelectorAll('[data-act="'+actName+'"]').forEach(function(el){
+          el.addEventListener("input",function(){
+            var patch={}; patch[key]=parseFloat(el.value);
+            liveAppearance(patch);
+            acts.forEach(function(a){
+              root.querySelectorAll('[data-act="'+a+'"]').forEach(function(other){
+                if(other!==el) other.value=el.value;
+              });
+            });
+          });
+        });
+      });
+    }
+    bindScaleRange(["font-range","font-range-panel"],"fontScale");
+    bindScaleRange(["icon-range","icon-range-panel"],"iconScale");
+
+    var search=root.querySelector('[data-act="search"]');
+    if(search){
+      search.addEventListener("input",function(){
+        state.searchQuery=search.value;
+        if(searchTimer) clearTimeout(searchTimer);
+        searchTimer=setTimeout(function(){
+          var active=document.activeElement;
+          var pos=active&&active.getAttribute&&active.getAttribute("data-act")==="search"?active.selectionStart:null;
+          render();
+          var s2=root.querySelector('[data-act="search"]');
+          if(s2){ s2.focus(); if(pos!=null) try{ s2.setSelectionRange(pos,pos); }catch(e){} }
+        },140);
+      });
+    }
+    var fc=root.querySelector('[data-act="filter-court"]');
+    if(fc) fc.addEventListener("change",function(){ state.filterCourt=fc.value; render(); });
+    var fs=root.querySelector('[data-act="filter-status"]');
+    if(fs) fs.addEventListener("change",function(){ state.filterStatus=fs.value; render(); });
+
+    var cc=root.querySelector('[data-act="court-change"]');
+    if(cc){
+      cc.addEventListener("change",function(){
+        var form=root.querySelector('[data-form="case"]');
+        var fd=new FormData(form);
+        var vals={}; fd.forEach(function(val,k){ vals[k]=val; });
+        state.modal.values=vals; state.modal._focus="courtType"; render();
+      });
+    }
+
+    var importFile=root.querySelector("#importFile");
+    if(importFile){
+      importFile.addEventListener("change",function(){
+        var file=importFile.files&&importFile.files[0];
+        if(!file) return;
+        if(file.size>MAX_IMPORT_BYTES){ showToast("حجم فایل پشتیبان بیش از حد مجاز است."); importFile.value=""; return; }
+        var reader=new FileReader();
+        reader.onload=function(){
+          try{
+            var data=normalizeImportedData(JSON.parse(reader.result));
+            state.modal={type:"import-confirm",data:data}; render();
+          }catch(e){ showToast("فایل انتخاب‌شده یک پشتیبان معتبر نیست."); }
+          importFile.value="";
+        };
+        reader.onerror=function(){ showToast("خواندن فایل پشتیبان ممکن نشد."); importFile.value=""; };
+        reader.readAsText(file);
+      });
+    }
+
+    var attFile=root.querySelector("#attFile");
+    if(attFile){
+      var attTitleEl=root.querySelector("#attTitle");
+      var titleTouched=!!(attTitleEl&&attTitleEl.value);
+      if(attTitleEl) attTitleEl.addEventListener("input",function(){ titleTouched=true; });
+      attFile.addEventListener("change",function(){
+        var f=attFile.files&&attFile.files[0];
+        var hint=root.querySelector("#attSizeHint");
+        if(f&&hint){
+          hint.textContent="حجم فایل: "+formatBytes(f.size)+(f.size>20*1024*1024?" — فایل حجیم است؛ ذخیره ممکن است طول بکشد.":"");
+        }
+        if(f&&attTitleEl&&!titleTouched){
+          var base=f.name.replace(/\.[^.]+$/,"");
+          attTitleEl.value=base;
+        }
+      });
+    }
+
+    var attachForm=root.querySelector('[data-form="attachment"]');
+    if(attachForm){
+      attachForm.addEventListener("submit",function(ev){
+        ev.preventDefault();
+        var fileEl=root.querySelector("#attFile");
+        var file=fileEl&&fileEl.files&&fileEl.files[0];
+        var titleEl=root.querySelector("#attTitle");
+        var title=(titleEl&&titleEl.value||"").trim();
+        var errors={};
+        if(!file) errors.file="یک فایل انتخاب کنید.";
+        if(!title) errors.title="عنوان الزامی است.";
+        if(Object.keys(errors).length){
+          state.modal.errors=errors; state.modal.titleValue=title; render(); return;
+        }
+        var submitBtn=root.querySelector("#attSubmitBtn");
+        if(submitBtn){ submitBtn.disabled=true; submitBtn.textContent="در حال ذخیره…"; }
+        var caseId=state.modal.caseId;
+        var rec={ id:uid(), caseId:caseId, title:title, fileName:file.name,
+          mimeType:file.type||"application/octet-stream", size:file.size, date:todayStr(), data:file };
+        addAttachment(rec).then(function(){
+          var arr=state.attachmentsByCase[caseId];
+          if(Array.isArray(arr)){ arr.unshift(rec); }
+          state.modal=null; render();
+        }).catch(function(){
+          if(submitBtn){ submitBtn.disabled=false; submitBtn.textContent="ذخیره پیوست"; }
+          state.modal.errors={file:"ذخیرهٔ فایل ممکن نشد؛ ممکن است حجم فایل زیاد باشد یا فضای مرورگر کافی نباشد."};
+          render();
+        });
+      });
+    }
+
+    var followupForm=root.querySelector('[data-form="followup"]');
+    if(followupForm){
+      followupForm.addEventListener("submit",function(ev){
+        ev.preventDefault();
+        var fd=new FormData(followupForm);
+        var title=(fd.get("title")||"").trim();
+        var dueRaw=(fd.get("dueDate")||"").trim(), due=dueRaw?normalizeJalaliInput(dueRaw):"";
+        var data={ title:title, priority:fd.get("priority")==="urgent"?"urgent":"normal", dueDate:due||dueRaw, description:(fd.get("description")||"").trim() };
+        var fuErr={}; if(!title) fuErr.title="عنوان الزامی است."; if(dueRaw&&!due) fuErr.dueDate="تاریخ سررسید معتبر نیست.";
+        if(Object.keys(fuErr).length){ state.modal.errors=fuErr; state.modal.values=data; render(); return; }
+        upsertFollowup(state.modal.caseId,data,state.modal.followupId);
+        state.modal=null; render();
+      });
+    }
+
+    var finKindSel=root.querySelector('[data-act="fin-kind-change"]');
+    if(finKindSel){
+      finKindSel.addEventListener("change",function(){
+        var form=root.querySelector('[data-form="fin"]');
+        var fd=new FormData(form);
+        var vals={}; fd.forEach(function(val,k){ vals[k]=val; });
+        if(!FIN_CATS[vals.category] || FIN_CATS[vals.category].kind!==vals.kind){
+          vals.category=finDefaultCat(vals.kind);
+          vals.payer=finDefaultPayer(vals.kind);
+        }
+        state.modal.values=vals; state.modal._focus="kind"; render();
+      });
+    }
+    var finAmt=root.querySelector("#finAmount");
+    if(finAmt){
+      var finWordsEl=root.querySelector("#finWords");
+      var updFinWords=function(){
+        if(!finWordsEl) return;
+        var n=parseAmount(finAmt.value);
+        if(n) finWordsEl.textContent="به حروف: "+numToWordsFa(n)+" تومان";
+        else finWordsEl.textContent=finAmt.value.trim()?"مبلغ نامعتبر است — فقط رقم وارد کنید.":"";
+      };
+      finAmt.addEventListener("input",updFinWords);
+      finAmt.addEventListener("blur",function(){ var n=parseAmount(finAmt.value); if(n) finAmt.value=formatMoney(n); updFinWords(); });
+      updFinWords();
+    }
+    var finForm=root.querySelector('[data-form="fin"]');
+    if(finForm){
+      finForm.addEventListener("submit",function(ev){
+        ev.preventDefault();
+        var fd=new FormData(finForm);
+        var kind=fd.get("kind")==="income"?"income":"expense";
+        var category=fd.get("category");
+        if(!FIN_CATS[category] || FIN_CATS[category].kind!==kind) category=finFallbackCat(kind);
+        var amount=parseAmount(fd.get("amount"));
+        var date=normalizeJalaliInput(fd.get("date")||"");
+        var payerRaw=fd.get("payer");
+        var payer=Object.prototype.hasOwnProperty.call(FIN_PAYERS,payerRaw)?payerRaw:finDefaultPayer(kind);
+        var data={ kind:kind, category:category, amount:amount||0, date:date||fd.get("date"), payer:payer,
+          account:(fd.get("account")||"").trim(), refNo:(fd.get("refNo")||"").trim(), description:(fd.get("description")||"").trim() };
+        var finErr={};
+        if(!amount) finErr.amount="مبلغ معتبر نیست؛ فقط رقم (به تومان) وارد کنید.";
+        if(!date) finErr.date="تاریخ معتبر نیست. نمونه: ۱۴۰۵/۰۶/۱۰";
+        if(Object.keys(finErr).length){
+          state.modal.errors=finErr;
+          state.modal.values=Object.assign({},data,{amount:fd.get("amount")});
+          render(); return;
+        }
+        upsertFin(state.modal.caseId,data,state.modal.finId);
+        state.modal=null; render();
+      });
+    }
+
+    var profileForm=root.querySelector('[data-form="profile"]');
+    if(profileForm){
+      // پیشنهاد خودکار عنوان سربرگ تا وقتی کاربر خودش آن را ننوشته باشد
+      var tEl=root.querySelector("#pfTitle");
+      var fEl=root.querySelector("#pfFirst");
+      var lEl=root.querySelector("#pfLast");
+      if(tEl&&fEl&&lEl){
+        var touched=!!tEl.value;
+        tEl.addEventListener("input",function(){ touched=true; });
+        function suggest(){
+          if(touched) return;
+          var nm=[fEl.value.trim(),lEl.value.trim()].filter(Boolean).join(" ");
+          tEl.value=nm?("دفتر وکالت "+nm):"";
+        }
+        fEl.addEventListener("input",suggest);
+        lEl.addEventListener("input",suggest);
+      }
+      profileForm.addEventListener("submit",function(ev){
+        ev.preventDefault();
+        var fd=new FormData(profileForm);
+        var p={
+          firstName:(fd.get("firstName")||"").trim(),
+          lastName:(fd.get("lastName")||"").trim(),
+          displayTitle:(fd.get("displayTitle")||"").trim(),
+          subtitle:(fd.get("subtitle")||"").trim(),
+          role:(fd.get("role")||"").trim()
+        };
+        if(!p.firstName && !p.lastName){
+          state.modal=state.modal||{type:"profile"};
+          state.modal.errors={name:"نام یا نام خانوادگی را وارد کنید."};
+          state.modal.values=p; render(); return;
+        }
+        if(!p.displayTitle) p.displayTitle="دفتر وکالت "+[p.firstName,p.lastName].filter(Boolean).join(" ");
+        state.profile=p; saveState();
+        state.modal=null; render();
+      });
+    }
+
+    var caseForm=root.querySelector('[data-form="case"]');
+    if(caseForm){
+      caseForm.addEventListener("submit",function(ev){
+        ev.preventDefault();
+        var fd=new FormData(caseForm);
+        var data={
+          courtType:fd.get("courtType"),
+          caseNumber:(fd.get("caseNumber")||"").trim(),
+          fileNumber:(fd.get("fileNumber")||"").trim(),
+          branch:(fd.get("branch")||"").trim(),
+          status:fd.get("status"),
+          openedDate:normalizeJalaliInput(fd.get("openedDate")||"")||"",
+          outcome:fd.get("outcome")==="win"?"win":(fd.get("outcome")==="loss"?"loss":"pending"),
+          outcomeDate:normalizeJalaliInput(fd.get("outcomeDate")||"")||"",
+          client:(fd.get("client")||"").trim(),
+          clientRole:(fd.get("clientRole")||"").trim(),
+          plaintiff:(fd.get("plaintiff")||"").trim(),
+          defendant:(fd.get("defendant")||"").trim(),
+          subject:(fd.get("subject")||"").trim(),
+          nextAction:(fd.get("nextAction")||"").trim()
+        };
+        var caseErrors={};
+        if(!data.caseNumber && !data.fileNumber) caseErrors.caseNumber="دست‌کم شماره پرونده یا شماره بایگانی را وارد کنید.";
+        if(!data.openedDate) caseErrors.openedDate="تاریخ ثبت پرونده معتبر نیست.";
+        var rawOutcomeDate=(fd.get("outcomeDate")||"").trim();
+        if(rawOutcomeDate && !data.outcomeDate) caseErrors.outcomeDate="تاریخ نتیجه معتبر نیست.";
+        if(data.outcome!=="pending" && !data.outcomeDate) data.outcomeDate=todayStr();
+        if(data.outcome==="pending") data.outcomeDate="";
+        if(Object.keys(caseErrors).length){ state.modal.errors=caseErrors; state.modal.values=data; render(); return; }
+        upsertCase(data,state.modal.id);
+        state.modal=null; render();
+      });
+    }
+
+    var eventForm=root.querySelector('[data-form="event"]');
+    if(eventForm){
+      eventForm.addEventListener("submit",function(ev){
+        ev.preventDefault();
+        var fd=new FormData(eventForm);
+        var norm=normalizeJalaliInput(fd.get("date")||"");
+        var title=(fd.get("title")||"").trim();
+        var errors={};
+        if(!norm) errors.date="تاریخ معتبر نیست. نمونه: ۱۴۰۵/۰۶/۱۰";
+        if(!title) errors.title="عنوان الزامی است.";
+        var data={type:fd.get("type"),date:norm||fd.get("date"),title:title,description:(fd.get("description")||"").trim()};
+        if(Object.keys(errors).length){ state.modal.errors=errors; state.modal.values=data; render(); return; }
+        upsertEvent(state.modal.caseId,data,state.modal.eventId);
+        state.modal=null; render();
+      });
+    }
+  }
+
+  document.addEventListener("keydown",function(ev){
+    if(ev.key!=="Escape" && ev.key!=="Esc") return;
+    if(helpPopEl){ ev.preventDefault(); closeHelp(); return; }
+    if(state.appearanceOpen){ ev.preventDefault(); state.appearanceOpen=false; render(); return; }
+    if(!state.modal) return;
+    ev.preventDefault();
+    state.modal=null;
+    render();
+  });
+
+  loadState(render);
+})();
+</script>
+</body>
+</html>
