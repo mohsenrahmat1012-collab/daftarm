@@ -637,6 +637,70 @@
   .backup-note .bk-b{ font-size:.78rem; line-height:1.9; }
   .backup-note .bk-a{ display:flex; gap:8px; margin-top:9px; flex-wrap:wrap; }
 
+  /* ---------- کارهای روزانه ---------- */
+  .tab[data-view="todos"]:not(.active) .ico{ color:var(--sage); }
+  .todo-progress{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:11px 14px; margin-bottom:12px; }
+  .todo-progress .tp-lbl{ display:flex; justify-content:space-between; gap:8px; font-size:.75rem; color:var(--text-muted); margin-bottom:8px; }
+  .todo-progress .tp-lbl b{ color:var(--sage); font-weight:800; }
+  .tp-track{ height:8px; border-radius:999px; background:var(--panel-alt); border:1px solid var(--border); overflow:hidden; }
+  .tp-fill{ height:100%; border-radius:999px; background:linear-gradient(90deg, var(--teal), var(--sage)); transition:width .3s ease; }
+  .todo-add{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:10px; margin-bottom:18px; }
+  .ta-row{ display:flex; gap:8px; align-items:stretch; }
+  .ta-row input{ flex:1 1 auto; min-width:0; }
+  .ta-row .btn{ flex:0 0 auto; }
+  .ta-opts, .date-presets{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .when-chip{
+    font-family:inherit; font-size:.72rem; font-weight:700; padding:5px 11px; border-radius:999px; cursor:pointer;
+    border:1px solid var(--border); background:var(--panel-alt); color:var(--text-muted); -webkit-tap-highlight-color:transparent;
+  }
+  .when-chip:hover{ color:var(--text); border-color:var(--brass-dim); }
+  .when-chip.on{ background:color-mix(in srgb, var(--teal) 16%, transparent); border-color:var(--teal); color:var(--teal); }
+  .when-chip.urg.on{ background:color-mix(in srgb, var(--maroon) 15%, transparent); border-color:var(--maroon); color:var(--alarm); }
+  .todo-group{ margin-bottom:16px; }
+  .todo-gt{ font-size:.8rem; font-weight:800; color:var(--text-muted); margin:0 2px 8px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .todo-gt .count{ font-size:.7rem; font-weight:600; background:var(--panel-alt); border:1px solid var(--border); border-radius:20px; padding:1px 9px; }
+  .todo-gt.alarm{ color:var(--alarm); }
+  .todo-list{ display:flex; flex-direction:column; gap:6px; }
+  .todo-row{
+    display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--border);
+    border-inline-start:3px solid color-mix(in srgb, var(--sage) 55%, transparent); border-radius:12px; padding:7px 10px;
+  }
+  .todo-row.urgent{ border-inline-start-color:var(--maroon); }
+  .todo-row.done{ border-inline-start-color:var(--border); opacity:.72; }
+  .todo-check{
+    flex:0 0 auto; inline-size:28px; block-size:28px; border-radius:50%; padding:0; cursor:pointer;
+    border:2px solid var(--sage); background:transparent; color:var(--on-accent);
+    display:flex; align-items:center; justify-content:center; transition:background .15s, transform .1s;
+  }
+  .todo-check:hover{ background:color-mix(in srgb, var(--sage) 18%, transparent); }
+  .todo-check:active{ transform:scale(.9); }
+  .todo-row.done .todo-check{ background:var(--sage); }
+  .todo-check svg{ width:15px; height:15px; }
+  .todo-main{
+    flex:1 1 auto; min-width:0; text-align:right; background:transparent; border:0; color:var(--text);
+    font-family:inherit; cursor:pointer; padding:3px 0; display:flex; flex-direction:column; align-items:flex-start; gap:3px;
+  }
+  .todo-title{ font-size:.875rem; font-weight:600; line-height:1.7; word-break:break-word; }
+  .todo-row.done .todo-title{ text-decoration:line-through; color:var(--text-muted); }
+  .todo-meta{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; max-width:100%; }
+  .td-when, .td-note{ font-size:.68rem; color:var(--text-muted); }
+  .td-note{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+  .todo-del{ flex:0 0 auto; background:transparent; border:0; color:var(--text-muted); cursor:pointer; padding:7px; border-radius:8px; display:flex; }
+  .todo-del:hover{ color:var(--alarm); background:var(--panel-alt); }
+  .todo-del .ico{ margin:0; }
+  .todo-done-bar{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0 8px; }
+  .todo-dash{ margin-bottom:24px; }
+  .todo-dash-empty{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    background:var(--panel); border:1px dashed var(--border); border-radius:12px; padding:10px 14px; font-size:.8rem; color:var(--text-muted);
+  }
+  .toast{ display:flex; align-items:center; justify-content:center; gap:4px; }
+  .toast .toast-act{
+    margin-inline-start:10px; border:0; background:transparent; color:var(--brass); font-weight:800;
+    font-family:inherit; font-size:inherit; cursor:pointer; padding:2px 4px;
+  }
+  @media print{ .todo-add, .todo-del, .todo-done-bar{ display:none !important; } }
+
   /* ---------- نوار ناوبری پایین (موبایل) ---------- */
   .bottomnav{ display:none; }
 
@@ -668,6 +732,9 @@
     .bottomnav .bn[data-view="stats"]:not(.active) .ico{ color:var(--violet); }
     .bottomnav .bn[data-view="cases"]:not(.active) .ico{ color:var(--teal); }
     .bottomnav .bn[data-view="followups"]:not(.active) .ico{ color:var(--amber); }
+    .bottomnav .bn[data-view="todos"]:not(.active) .ico{ color:var(--sage); }
+    .ta-row .btn{ padding:8px 12px; }
+    .todo-row{ padding:6px 8px; gap:8px; }
     .bottomnav .bn[data-view="settings"]:not(.active) .ico{ color:var(--slate); }
     .bottomnav .bn.alarm{ color:var(--alarm); }
     .bottomnav .bn.alarm:not(.active) .ico{ color:var(--alarm); }
@@ -771,6 +838,7 @@
     "outcome-date":{t:"تاریخ نتیجه", b:"اگر برد/باخت را انتخاب کنید و تاریخ خالی باشد، تاریخ امروز ثبت می‌شود."},
     "next-action":{t:"وضعیت فعلی", b:"این یادداشت در بالای صفحهٔ پرونده نمایش داده می‌شود."},
     "date-2digit":{t:"تاریخ شمسی", b:"سال ۲رقمی نسبت به امروز تفسیر می‌شود؛ مثلاً ۸۵ می‌شود ۱۳۸۵ و ۰۵ می‌شود ۱۴۰۵."},
+    "todos":{t:"کارهای روزانه", b:"فهرستی مستقل از پرونده‌ها برای کارهای روزمره. کار را بنویسید، زمانش را با «امروز/فردا/بدون تاریخ» تعیین کنید و با لمس دایره تیک بزنید. لمس عنوان کار برای ویرایش، تاریخ دیگر و یادداشت است. کارهای عقب‌افتاده را می‌توانید با یک لمس به امروز منتقل کنید. این فهرست هم در «پشتیبان کامل» ذخیره می‌شود."},
     "deadline-calc":{t:"محاسبهٔ سررسید", b:"این محاسبه صرفاً تقویمی است و اعداد پیش‌فرض فقط برای تسریع کار است؛ مبدأ مهلت، ایام تعطیل، اقامت خارج از کشور و مقررات خاص حاکم بر همان پرونده را جداگانه بررسی کنید."}
   };
   function helpBtn(key){
@@ -917,6 +985,8 @@
       palette:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="14.5" cy="14.5" r="1.2" fill="currentColor" stroke="none"/>',
       type:'<path d="M4 19h6M7 19V6h8v13M11 6h8M15 6v4"/>',
       icon:'<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+      check:'<rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M8 12.3l2.8 2.8L16.2 9.6"/>',
+      trash:'<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 12.5h9l1-12.5"/><path d="M10.5 11v5M13.5 11v5"/>',
       coins:'<circle cx="9" cy="9" r="5.5"/><path d="M14.7 7.1a5.5 5.5 0 1 1-7.6 7.6"/><path d="M7 9h4M9 7v4"/>'
     };
     return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(p[name]||"")+'</svg>';
@@ -1127,7 +1197,8 @@
     loading:true, modal:null, toast:null,
     attachmentsByCase:{},
     appearanceOpen:false,
-    appearance:null, statsPeriod:"month"
+    appearance:null, statsPeriod:"month",
+    todos:[], todoDraft:{text:"", when:"today", urgent:false}, todoShowDone:false
   };
   state.appearance=loadAppearance();
   applyAppearance();
@@ -1408,14 +1479,28 @@
         attachments.push({id:a.id,caseId:a.caseId,title:safeString(a.title,3000),fileName:safeString(a.fileName,1000),mimeType:safeString(a.mimeType,300),size:Number(a.size)||0,date:migrateDateStr(a.date)||todayStr(),dataURL:a.dataURL});
       });
     }
-    return {version:Number(parsed.version)||1,profile:profile,cases:cases,attachments:attachments,appearance:parsed.appearance||null};
+    var todos=null;
+    if(Array.isArray(parsed.todos)){
+      if(parsed.todos.length>50000) throw new Error("too-many-todos");
+      var seenTd={};
+      todos=parsed.todos.map(function(t){
+        if(!t||typeof t!=="object") return null;
+        var title=safeString(t.title,3000).trim(); if(!title) return null;
+        var tid=safeId(t.id)?t.id:uid(); if(seenTd[tid]) tid=uid(); seenTd[tid]=1;
+        return { id:tid, title:title, done:!!t.done,
+          dueDate:migrateDateStr(t.dueDate||""), doneDate:t.done?(migrateDateStr(t.doneDate||"")||todayStr()):"",
+          priority:t.priority==="urgent"?"urgent":"normal", note:safeString(t.note,20000),
+          createdAt:safeString(t.createdAt,40)||new Date().toISOString() };
+      }).filter(Boolean);
+    }
+    return {version:Number(parsed.version)||1,profile:profile,cases:cases,attachments:attachments,appearance:parsed.appearance||null,todos:todos};
   }
   function loadState(cb){
     try{
       var raw=storageOK?window.localStorage.getItem(STORE_KEY):null;
       var parsed=raw?JSON.parse(raw):{cases:[]};
       var clean=normalizeImportedData(parsed);
-      state.cases=clean.cases; state.profile=clean.profile;
+      state.cases=clean.cases; state.profile=clean.profile; state.todos=clean.todos||[];
     }catch(e){
       state.cases=[]; state.profile=null;
       state.loadError=true;
@@ -1426,23 +1511,30 @@
   function migrateCase(c){ return normalizeImportedData({cases:[c]}).cases[0]; }
   function saveState(){
     if(!storageOK || state.loadError) return;
-    try{ window.localStorage.setItem(STORE_KEY, JSON.stringify({version:DATA_VERSION,profile:state.profile,cases:state.cases})); }
+    try{ window.localStorage.setItem(STORE_KEY, JSON.stringify({version:DATA_VERSION,profile:state.profile,cases:state.cases,todos:state.todos})); }
     catch(e){ storageOK=false; render(); }
   }
   var toastTimer=null;
   var searchTimer=null;
   var lastModalSig=null;
-  function showToast(msg){
+  function showToast(msg, actionLabel, actionFn){
     var old=document.getElementById("liveToast"); if(old&&old.parentNode) old.parentNode.removeChild(old);
-    var t=document.createElement("div"); t.className="toast"; t.id="liveToast"; t.setAttribute("role","status"); t.setAttribute("aria-live","polite"); t.textContent=msg; document.body.appendChild(t);
-    if(toastTimer) clearTimeout(toastTimer); toastTimer=setTimeout(function(){var el=document.getElementById("liveToast");if(el&&el.parentNode) el.parentNode.removeChild(el);},4000);
+    var t=document.createElement("div"); t.className="toast"; t.id="liveToast"; t.setAttribute("role","status"); t.setAttribute("aria-live","polite");
+    var sp=document.createElement("span"); sp.textContent=msg; t.appendChild(sp);
+    if(actionLabel && typeof actionFn==="function"){
+      var b=document.createElement("button"); b.type="button"; b.className="toast-act"; b.textContent=actionLabel;
+      b.addEventListener("click",function(){ if(t.parentNode) t.parentNode.removeChild(t); actionFn(); });
+      t.appendChild(b);
+    }
+    document.body.appendChild(t);
+    if(toastTimer) clearTimeout(toastTimer); toastTimer=setTimeout(function(){var el=document.getElementById("liveToast");if(el&&el.parentNode) el.parentNode.removeChild(el);},actionLabel?6000:4000);
   }
   function exportBackup(){
     showToast("در حال آماده‌سازی پشتیبان کامل…");
     getAllAttachments().then(function(list){
       return Promise.all(list.map(function(a){ return blobToDataURL(a.data).then(function(dataURL){return {id:a.id,caseId:a.caseId,title:a.title,fileName:a.fileName,mimeType:a.mimeType,size:a.size,date:a.date,dataURL:dataURL};}); }));
     }).then(function(atts){
-      var payload=JSON.stringify({version:DATA_VERSION,profile:state.profile,cases:state.cases,appearance:state.appearance,attachments:atts,exportedAt:todayStr()},null,2);
+      var payload=JSON.stringify({version:DATA_VERSION,profile:state.profile,cases:state.cases,todos:state.todos,appearance:state.appearance,attachments:atts,exportedAt:todayStr()},null,2);
       triggerDownload(new Blob([payload],{type:"application/json"}),"cases-backup-full-"+todayStr().replace(/\//g,"-")+".json");
       markBackupDone();
       showToast("پشتیبان کامل شامل پرونده‌ها و پیوست‌ها ساخته شد.");
@@ -1643,7 +1735,7 @@
       html=renderSetupScreen();
     } else {
       html=renderHeader()+'<div class="app">'+renderStorageWarning()+'<main>'+
-        (state.view==="dashboard"?renderDashboard():state.view==="stats"?renderStatsTab():state.view==="followups"?renderFollowupsTab():state.view==="settings"?renderSettingsTab():renderCases())+'</main></div>';
+        (state.view==="dashboard"?renderDashboard():state.view==="stats"?renderStatsTab():state.view==="followups"?renderFollowupsTab():state.view==="todos"?renderTodosTab():state.view==="settings"?renderSettingsTab():renderCases())+'</main></div>';
       if(state.modal) html+=renderModal();
     }
     if(!state.profile && state.appearanceOpen) html+=renderAppearancePanel();
@@ -1655,7 +1747,7 @@
   function modalSignature(){
     var m=state.modal;
     if(!m) return "";
-    return [m.type,m.id||"",m.caseId||"",m.eventId||"",m.followupId||"",m.finId||""].join("|");
+    return [m.type,m.id||"",m.caseId||"",m.eventId||"",m.followupId||"",m.finId||"",m.todoId||""].join("|");
   }
   function afterRenderFocus(){
     var modal=root.querySelector(".modal");
@@ -1742,12 +1834,14 @@
     var sub=p.subtitle || "پایش پرونده‌ها، مواعد و اوقات رسیدگی";
     var fc=pendingFollowupCounts();
     var fuLabel="پیگیری‌ها"+(fc.total?" ("+toFaDigits(fc.total)+")":"");
+    var tc=todoCounts();
     return '<header class="top"><div class="inner">'+
       '<div class="brand"><span class="title">'+escapeHtml(title)+'</span>'+
       '<span class="subtitle">'+escapeHtml(sub)+'</span></div>'+
       '<div class="head-tools">'+
         '<div class="tabs">'+
           '<button class="tab '+(state.view==="dashboard"?"active":"")+'" data-act="view" data-view="dashboard">'+ico("dash")+'داشبورد</button>'+
+          '<button class="tab '+(state.view==="todos"?"active":"")+(tc.overdue&&state.view!=="todos"?" alarm":"")+'" data-act="view" data-view="todos">'+ico("check")+'کارهای روزانه'+(tc.due?" ("+toFaDigits(tc.due)+")":"")+'</button>'+
           '<button class="tab '+(state.view==="stats"?"active":"")+'" data-act="view" data-view="stats">'+ico("chart")+'آمار</button>'+
           '<button class="tab '+(state.view==="cases"?"active":"")+'" data-act="view" data-view="cases">'+ico("folder")+'پرونده‌ها</button>'+
           '<button class="tab '+(state.view==="followups"?"active":"")+(fc.urgent&&state.view!=="followups"?" alarm":"")+'" data-act="view" data-view="followups">'+ico("list")+fuLabel+'</button>'+
@@ -1760,10 +1854,11 @@
         '<button class="btn btn-primary" data-act="new-case">'+ico("plus")+'پرونده جدید</button>'+
       '</div>'+
     '</div></header>'+
-    renderBottomNav(fc);
+    renderBottomNav(fc,tc);
   }
 
-  function renderBottomNav(fc){
+  function renderBottomNav(fc,tc){
+    tc=tc||todoCounts();
     function bn(view, icon, label, extra){
       var cls="bn"+(state.view===view?" active":"")+(extra&&extra.alarm?" alarm":"");
       return '<button class="'+cls+'" data-act="view" data-view="'+view+'">'+ico(icon)+
@@ -1773,9 +1868,10 @@
     }
     return '<nav class="bottomnav no-print" aria-label="ناوبری اصلی">'+
       bn("dashboard","dash","داشبورد")+
-      bn("stats","chart","آمار")+
+      bn("todos","check","کارها",{alarm:tc.overdue&&state.view!=="todos", count:tc.due})+
       bn("cases","folder","پرونده‌ها")+
       bn("followups","list","پیگیری‌ها",{alarm:fc.urgent&&state.view!=="followups", count:fc.total})+
+      bn("stats","chart","آمار")+
       bn("settings","palette","ظاهر")+
     '</nav>';
   }
@@ -2002,6 +2098,8 @@
       t.overdue.slice(0,6).forEach(function(u){ html+=trackedRow(u,true); });
     }
 
+    html+=renderTodoWidget();
+
     html+='<div class="section-title">نزدیک‌ترین مواعد و اوقات رسیدگی <span class="count">'+toFaDigits(t.upcoming.length)+'</span></div>';
     if(!t.upcoming.length){
       html+='<div class="empty">موعد یا وقت رسیدگی آینده‌ای ثبت نشده است.</div>';
@@ -2066,6 +2164,177 @@
     return html;
   }
 
+
+  /* ---------------- کارهای روزانه (مستقل از پرونده‌ها) ---------------- */
+  var CHECK_SVG='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  function getTodo(id){ for(var i=0;i<state.todos.length;i++) if(state.todos[i].id===id) return state.todos[i]; return null; }
+  function todoBucket(t){
+    if(!t.dueDate) return "nodate";
+    var d=daysDiff(t.dueDate); if(d===null) return "nodate";
+    return d<0?"overdue":(d===0?"today":"upcoming");
+  }
+  function todoSort(a,b){
+    if(a.priority!==b.priority) return a.priority==="urgent"?-1:1;
+    return String(a.dueDate||"9999/99/99").localeCompare(String(b.dueDate||"9999/99/99")) ||
+      String(a.createdAt).localeCompare(String(b.createdAt));
+  }
+  function todoCounts(){
+    var r={pending:0,due:0,overdue:0,doneToday:0}, today=todayStr();
+    state.todos.forEach(function(t){
+      if(t.done){ if(t.doneDate===today) r.doneToday++; return; }
+      r.pending++;
+      var b=todoBucket(t);
+      if(b==="overdue"){ r.overdue++; r.due++; } else if(b==="today") r.due++;
+    });
+    return r;
+  }
+  function todoDueLabel(t){
+    var d=daysDiff(t.dueDate); if(d===null) return formatDateDisplay(t.dueDate);
+    if(d===0) return "امروز"; if(d===1) return "فردا"; if(d===-1) return "دیروز";
+    if(d<0) return d>=-30 ? toFaDigits(-d)+" روز گذشته" : "از "+formatDateDisplay(t.dueDate);
+    if(d<7) return toFaDigits(d)+" روز دیگر";
+    return formatDateDisplay(t.dueDate);
+  }
+  function quickWhenDate(w){ return w==="today"?todayStr():(w==="tomorrow"?addDaysToJalali(todayStr(),1):""); }
+  function addTodo(data){
+    var t={ id:uid(), title:data.title, done:false, dueDate:data.dueDate||"", doneDate:"",
+      priority:data.priority==="urgent"?"urgent":"normal", note:data.note||"", createdAt:new Date().toISOString() };
+    state.todos.unshift(t); saveState(); return t;
+  }
+  function toggleTodo(id){
+    var t=getTodo(id); if(!t) return;
+    t.done=!t.done; t.doneDate=t.done?todayStr():""; saveState();
+  }
+  function deleteTodo(id){
+    var idx=-1; for(var i=0;i<state.todos.length;i++) if(state.todos[i].id===id){ idx=i; break; }
+    if(idx<0) return;
+    var removed=state.todos.splice(idx,1)[0]; saveState(); render();
+    showToast("«"+(removed.title.length>28?removed.title.slice(0,28)+"…":removed.title)+"» حذف شد.","بازگردانی",function(){
+      if(getTodo(removed.id)) return;
+      state.todos.splice(Math.min(idx,state.todos.length),0,removed); saveState(); render();
+    });
+  }
+  function rollOverdueTodos(){
+    var today=todayStr(), n=0;
+    state.todos.forEach(function(t){ if(!t.done && todoBucket(t)==="overdue"){ t.dueDate=today; n++; } });
+    if(n) saveState();
+    return n;
+  }
+  function todoRow(t){
+    var meta="";
+    if(t.priority==="urgent" && !t.done) meta+='<span class="badge badge-maroon">فوری</span>';
+    if(t.dueDate && !t.done){
+      var d=daysDiff(t.dueDate);
+      meta+='<span class="badge '+(d!==null&&d<0?"badge-maroon":(d===0?"badge-amber":"badge-slate"))+'">'+todoDueLabel(t)+'</span>';
+    }
+    if(t.done && t.doneDate) meta+='<span class="td-when">انجام: '+formatDateDisplay(t.doneDate)+'</span>';
+    if(t.note) meta+='<span class="td-note">'+escapeHtml(t.note.length>70?t.note.slice(0,70)+"…":t.note)+'</span>';
+    return '<div class="todo-row'+(t.done?" done":"")+(t.priority==="urgent"&&!t.done?" urgent":"")+'">'+
+      '<button type="button" class="todo-check" data-act="todo-toggle" data-id="'+t.id+'" role="checkbox" aria-checked="'+(t.done?"true":"false")+'" aria-label="'+(t.done?"برگرداندن به انجام‌نشده":"علامت انجام شد")+'">'+(t.done?CHECK_SVG:"")+'</button>'+
+      '<button type="button" class="todo-main" data-act="todo-edit" data-id="'+t.id+'">'+
+        '<span class="todo-title">'+escapeHtml(t.title)+'</span>'+
+        (meta?'<span class="todo-meta">'+meta+'</span>':'')+
+      '</button>'+
+      '<button type="button" class="todo-del" data-act="todo-delete" data-id="'+t.id+'" aria-label="حذف">'+ico("trash")+'</button>'+
+    '</div>';
+  }
+  function renderTodoGroup(title, items, opts){
+    if(!items.length) return "";
+    opts=opts||{};
+    return '<div class="todo-group">'+
+      '<div class="todo-gt'+(opts.alarm?" alarm":"")+'"><span>'+title+' <span class="count">'+toFaDigits(items.length)+'</span></span>'+(opts.action||"")+'</div>'+
+      '<div class="todo-list">'+items.map(todoRow).join("")+'</div>'+
+    '</div>';
+  }
+  function renderTodosTab(){
+    var c=todoCounts(), d=state.todoDraft;
+    var html='<div class="section-title">'+ico("check")+' کارهای روزانه'+helpBtn("todos")+'</div>';
+    var tot=c.due+c.doneToday;
+    if(tot){
+      var pct=Math.round(c.doneToday/tot*100);
+      html+='<div class="todo-progress"><div class="tp-lbl"><span>پیشرفت امروز</span><b>'+toFaDigits(c.doneToday)+' از '+toFaDigits(tot)+' انجام شد</b></div>'+
+        '<div class="tp-track"><div class="tp-fill" style="width:'+pct+'%"></div></div></div>';
+    }
+    function chip(w,label){ return '<button type="button" class="when-chip'+(d.when===w?" on":"")+'" data-act="todo-when" data-when="'+w+'" aria-pressed="'+(d.when===w)+'">'+label+'</button>'; }
+    html+='<form class="todo-add no-print" data-form="todo-quick" autocomplete="off">'+
+      '<div class="ta-row"><input type="text" id="todoQuick" name="title" maxlength="300" enterkeyhint="done" placeholder="کار تازه… مثلاً تمدید پروانه یا خرید تمبر" value="'+escapeHtml(d.text||"")+'">'+
+        '<button type="submit" class="btn btn-primary" aria-label="افزودن کار">'+ico("plus")+'افزودن</button></div>'+
+      '<div class="ta-opts">'+chip("today","امروز")+chip("tomorrow","فردا")+chip("none","بدون تاریخ")+
+        '<button type="button" class="when-chip" data-act="todo-more">تاریخ دیگر…</button>'+
+        '<button type="button" class="when-chip urg'+(d.urgent?" on":"")+'" data-act="todo-urgent" aria-pressed="'+(!!d.urgent)+'">★ فوری</button>'+
+      '</div></form>';
+
+    var pend=state.todos.filter(function(t){return !t.done;}).sort(todoSort);
+    var g={overdue:[],today:[],upcoming:[],nodate:[]};
+    pend.forEach(function(t){ g[todoBucket(t)].push(t); });
+    html+=renderTodoGroup("عقب‌افتاده",g.overdue,{alarm:true,
+      action:'<button type="button" class="btn btn-ghost btn-sm" data-act="todo-roll">انتقال همه به امروز</button>'});
+    html+=renderTodoGroup("امروز",g.today);
+    html+=renderTodoGroup("پیش‌رو",g.upcoming);
+    html+=renderTodoGroup("بدون تاریخ",g.nodate);
+
+    var done=state.todos.filter(function(t){return t.done;}).sort(function(a,b){
+      return String(b.doneDate).localeCompare(String(a.doneDate)) || String(b.createdAt).localeCompare(String(a.createdAt));
+    });
+    if(!pend.length){
+      html+='<div class="empty">'+(done.length?"همهٔ کارها انجام شده است. آفرین!":"هنوز کاری ثبت نشده است. کار تازه را در کادر بالا بنویسید و «افزودن» را بزنید.")+'</div>';
+    }
+    if(done.length){
+      html+='<div class="todo-done-bar no-print">'+
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="todo-show-done">'+(state.todoShowDone?"پنهان‌کردن":"نمایش")+' انجام‌شده‌ها ('+toFaDigits(done.length)+')</button>'+
+        (state.todoShowDone?'<button type="button" class="btn btn-ghost btn-sm" data-act="todo-clear-done">پاک‌کردن انجام‌شده‌ها</button>':'')+
+      '</div>';
+      if(state.todoShowDone) html+='<div class="todo-list">'+done.map(todoRow).join("")+'</div>';
+    }
+    return html;
+  }
+  function renderTodoWidget(){
+    var list=state.todos.filter(function(t){
+      if(t.done) return false;
+      var b=todoBucket(t);
+      return b==="overdue"||b==="today"||(b==="nodate"&&t.priority==="urgent");
+    }).sort(todoSort);
+    var html='<div class="todo-dash">';
+    html+='<div class="section-title">'+ico("check")+' کارهای امروز <span class="count">'+toFaDigits(list.length)+'</span></div>';
+    if(!list.length){
+      html+='<div class="todo-dash-empty"><span>کار عقب‌افتاده یا امروزی ندارید.</span>'+
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="view" data-view="todos">'+ico("plus")+'افزودن کار</button></div>';
+    } else {
+      html+='<div class="todo-list">'+list.slice(0,5).map(todoRow).join("")+'</div>';
+      html+='<button type="button" class="btn btn-ghost btn-sm" data-act="view" data-view="todos" style="margin-top:8px;">'+(list.length>5?"مشاهدهٔ همه ("+toFaDigits(list.length)+")":"همهٔ کارهای روزانه")+' ‹</button>';
+    }
+    html+='</div>';
+    return html;
+  }
+  function renderTodoModal(m){
+    var t=m.todoId?getTodo(m.todoId):null;
+    var v=m.values||t||{title:"",dueDate:todayStr(),priority:"normal",note:""};
+    var err=m.errors||{};
+    return '<div class="modal-backdrop" data-act="backdrop"><div class="modal">'+
+      '<h3>'+(t?"ویرایش کار":"کار تازه")+'</h3>'+
+      '<form data-form="todo">'+
+        '<div class="field"><label>عنوان کار</label><input type="text" name="title" maxlength="300" value="'+escapeHtml(v.title||"")+'">'+(err.title?'<div class="err">'+err.title+'</div>':'')+'</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>تاریخ انجام (اختیاری)'+helpBtn("date-2digit")+'</label>'+
+            '<input type="text" name="dueDate" id="todoDue" value="'+escapeHtml(v.dueDate||"")+'" placeholder="خالی = بدون تاریخ">'+
+            (err.dueDate?'<div class="err">'+err.dueDate+'</div>':'')+
+            '<div class="date-presets">'+
+              '<button type="button" class="when-chip" data-act="todo-date-preset" data-v="today">امروز</button>'+
+              '<button type="button" class="when-chip" data-act="todo-date-preset" data-v="tomorrow">فردا</button>'+
+              '<button type="button" class="when-chip" data-act="todo-date-preset" data-v="week">یک هفته بعد</button>'+
+              '<button type="button" class="when-chip" data-act="todo-date-preset" data-v="none">بدون تاریخ</button>'+
+            '</div></div>'+
+          '<div class="field"><label>اولویت</label><select name="priority">'+opt("normal","عادی",v.priority!=="urgent")+opt("urgent","فوری",v.priority==="urgent")+'</select></div>'+
+        '</div>'+
+        '<div class="field"><label>یادداشت (اختیاری)</label><textarea name="note">'+escapeHtml(v.note||"")+'</textarea></div>'+
+        '<div class="modal-actions">'+
+          (t?'<button type="button" class="btn btn-danger" data-act="todo-delete" data-id="'+t.id+'" style="margin-inline-end:auto;">حذف</button>':'')+
+          '<button type="button" class="btn btn-ghost" data-act="close-modal">انصراف</button>'+
+          '<button type="submit" class="btn btn-primary">ذخیره</button>'+
+        '</div>'+
+      '</form>'+
+    '</div></div>';
+  }
 
   function renderCases(){
     var q=toLatinDigits(state.searchQuery||"").trim().toLowerCase();
@@ -2336,6 +2605,7 @@
     if(m.type==="profile") return renderProfileModal(m);
     if(m.type==="attachment") return renderAttachmentModal(m);
     if(m.type==="followup") return renderFollowupModal(m);
+    if(m.type==="todo") return renderTodoModal(m);
     return "";
   }
   function opt(v,l,sel){ return '<option value="'+v+'"'+(sel?" selected":"")+'>'+l+'</option>'; }
@@ -2532,9 +2802,10 @@
   }
   function renderImportConfirmModal(m){
     var n=(m.data&&m.data.cases)?m.data.cases.length:0;
+    var nt=(m.data&&Array.isArray(m.data.todos))?m.data.todos.length:null;
     return '<div class="modal-backdrop" data-act="backdrop"><div class="modal">'+
       '<h3>بازیابی از فایل پشتیبان</h3>'+
-      '<div class="confirm-text">این فایل شامل '+toFaDigits(n)+' پرونده است. با بازیابی، تمام پرونده‌های فعلی این دستگاه جایگزین می‌شود و قابل بازگشت نیست. در صورت نیاز، ابتدا از وضعیت فعلی همین دستگاه خروجی پشتیبان بگیرید.<br><br>مشخصات وکیلِ موجود در فایل پشتیبان نیز بازیابی می‌شود. اگر فایل شامل پیوست باشد، پیوست‌های فعلی پس از تأیید جایگزین خواهند شد.</div>'+
+      '<div class="confirm-text">این فایل شامل '+toFaDigits(n)+' پرونده'+(nt!==null?' و '+toFaDigits(nt)+' کار روزانه':'')+' است. با بازیابی، تمام پرونده‌های فعلی'+(nt!==null?' و کارهای روزانهٔ':'')+' این دستگاه جایگزین می‌شود و قابل بازگشت نیست. در صورت نیاز، ابتدا از وضعیت فعلی همین دستگاه خروجی پشتیبان بگیرید.<br><br>مشخصات وکیلِ موجود در فایل پشتیبان نیز بازیابی می‌شود. اگر فایل شامل پیوست باشد، پیوست‌های فعلی پس از تأیید جایگزین خواهند شد.</div>'+
       '<div class="modal-actions"><button class="btn btn-ghost" data-act="close-modal">انصراف</button>'+
       '<button class="btn btn-danger" data-act="confirm-import">جایگزینی و بازیابی</button></div>'+
     '</div></div>';
@@ -2618,6 +2889,26 @@
         }
         else if(act==="help"){ ev.preventDefault(); ev.stopPropagation(); toggleHelp(el, el.getAttribute("data-help")); }
         else if(act==="snooze-backup"){ var mm=loadMeta(); mm.backupSnoozeUntil=Date.now()+7*86400000; saveMeta(mm); render(); }
+        else if(act==="todo-toggle"){ toggleTodo(el.getAttribute("data-id")); render(); }
+        else if(act==="todo-edit"){ state.modal={type:"todo",todoId:el.getAttribute("data-id")}; render(); }
+        else if(act==="todo-delete"){ var tdId=el.getAttribute("data-id"); if(state.modal&&state.modal.type==="todo") state.modal=null; deleteTodo(tdId); }
+        else if(act==="todo-when"){ state.todoDraft.when=el.getAttribute("data-when"); render(); }
+        else if(act==="todo-urgent"){ state.todoDraft.urgent=!state.todoDraft.urgent; render(); }
+        else if(act==="todo-more"){
+          state.modal={type:"todo",fromDraft:true,values:{title:(state.todoDraft.text||"").trim(),dueDate:quickWhenDate(state.todoDraft.when)||todayStr(),priority:state.todoDraft.urgent?"urgent":"normal",note:""}};
+          render();
+        }
+        else if(act==="todo-roll"){ var rn=rollOverdueTodos(); render(); if(rn) showToast(toFaDigits(rn)+" کار به امروز منتقل شد."); }
+        else if(act==="todo-show-done"){ state.todoShowDone=!state.todoShowDone; render(); }
+        else if(act==="todo-clear-done"){
+          var nDone=state.todos.filter(function(x){return x.done;}).length;
+          state.modal={type:"confirm",message:toFaDigits(nDone)+" کار انجام‌شده برای همیشه پاک شود؟",onConfirm:function(){ state.todos=state.todos.filter(function(x){return !x.done;}); state.todoShowDone=false; saveState(); }};
+          render();
+        }
+        else if(act==="todo-date-preset"){
+          var dIn=root.querySelector("#todoDue"), pv=el.getAttribute("data-v");
+          if(dIn) dIn.value=pv==="none"?"":toFaDigits(pv==="week"?addDaysToJalali(todayStr(),7):quickWhenDate(pv));
+        }
         else if(act==="close-modal"){ state.modal=null; render(); }
         else if(act==="confirm-yes"){ if(state.modal&&state.modal.onConfirm) state.modal.onConfirm(); state.modal=null; render(); }
         else if(act==="confirm-import"){
@@ -2633,6 +2924,7 @@
               return clearAllAttachments().then(function(){ return Promise.all(staged.map(addAttachment)); });
             }).then(function(){
               state.cases=imp.cases; if(imp.profile) state.profile=imp.profile;
+              if(Array.isArray(imp.todos)) state.todos=imp.todos;
               if(imp.appearance&&typeof imp.appearance==="object") state.appearance=Object.assign(defaultAppearance(),imp.appearance);
               state.attachmentsByCase={}; state.loadError=false; state.rawRecovery=null; saveState(); saveAppearance(); applyAppearance();
               markBackupDone();
@@ -2921,6 +3213,43 @@
         if(data.outcome==="pending") data.outcomeDate="";
         if(Object.keys(caseErrors).length){ state.modal.errors=caseErrors; state.modal.values=data; render(); return; }
         upsertCase(data,state.modal.id);
+        state.modal=null; render();
+      });
+    }
+
+    var todoQuickForm=root.querySelector('[data-form="todo-quick"]');
+    if(todoQuickForm){
+      var tq=root.querySelector("#todoQuick");
+      tq.addEventListener("input",function(){ state.todoDraft.text=tq.value; });
+      todoQuickForm.addEventListener("submit",function(ev){
+        ev.preventDefault();
+        var title=(tq.value||"").trim();
+        if(!title){ try{ tq.focus(); }catch(e){} return; }
+        addTodo({title:title.slice(0,300), dueDate:quickWhenDate(state.todoDraft.when), priority:state.todoDraft.urgent?"urgent":"normal"});
+        state.todoDraft.text=""; state.todoDraft.urgent=false;
+        render();
+        var tq2=root.querySelector("#todoQuick"); if(tq2) try{ tq2.focus(); }catch(e){}
+      });
+    }
+    var todoForm=root.querySelector('[data-form="todo"]');
+    if(todoForm){
+      todoForm.addEventListener("submit",function(ev){
+        ev.preventDefault();
+        var fd=new FormData(todoForm);
+        var title=(fd.get("title")||"").trim();
+        var dueRaw=(fd.get("dueDate")||"").trim(), due=dueRaw?normalizeJalaliInput(dueRaw):"";
+        var data={title:title.slice(0,300), dueDate:due||"", priority:fd.get("priority")==="urgent"?"urgent":"normal", note:(fd.get("note")||"").trim()};
+        var tdErr={};
+        if(!title) tdErr.title="عنوان کار را بنویسید.";
+        if(dueRaw&&!due) tdErr.dueDate="تاریخ معتبر نیست. نمونه: ۱۴۰۵/۰۷/۲۰";
+        if(Object.keys(tdErr).length){ state.modal.errors=tdErr; state.modal.values=Object.assign({},data,{dueDate:dueRaw}); render(); return; }
+        var existing=state.modal.todoId?getTodo(state.modal.todoId):null;
+        if(existing){
+          existing.title=data.title; existing.dueDate=data.dueDate; existing.priority=data.priority; existing.note=data.note; saveState();
+        } else {
+          addTodo(data);
+          if(state.modal.fromDraft){ state.todoDraft.text=""; state.todoDraft.urgent=false; }
+        }
         state.modal=null; render();
       });
     }
